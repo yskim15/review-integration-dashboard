@@ -71,6 +71,7 @@
 
   /* ---------- sidebar ---------- */
   .sidebar {
+    position:sticky; top:0; align-self:flex-start; height:100vh; overflow-y:auto;
     flex:none; width:236px; background:var(--navy-900); color:var(--text-on-navy);
     display:flex; flex-direction:column; padding:18px 14px; gap:22px;
   }
@@ -112,27 +113,32 @@
   .pill-group button[aria-pressed="true"] { background:var(--navy-700); color:#fff; }
   .pill-group button:focus-visible { outline:2px solid var(--chart-1); outline-offset:2px; }
 
-  /* ---------- KPI ---------- */
-  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
-  @media (max-width:980px) { .kpi-grid { grid-template-columns:repeat(2,1fr); } }
-  @media (max-width:520px) { .kpi-grid { grid-template-columns:1fr; } }
-  .kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); padding:18px 20px; display:flex; flex-direction:column; gap:9px; }
-  .kpi-card.clickable { cursor:pointer; }
-  .kpi-card.clickable:hover { border-color:var(--critical); }
-  .kpi-icon { width:33px; height:33px; border-radius:9px; display:grid; place-items:center; }
-  .kpi-icon svg { width:16px; height:16px; }
-  .kpi-label { font-size:12.5px; font-weight:700; color:var(--text-secondary); }
-  .kpi-value { font-family:var(--font-display); font-size:25px; font-weight:700; letter-spacing:-0.01em; }
-  .kpi-value .unit { font-size:13px; font-weight:600; color:var(--text-muted); margin-left:2px; }
-  .kpi-caption { font-size:11.5px; color:var(--text-muted); }
+  .date-range-picker { display:flex; align-items:center; gap:6px; font-size:12.5px; color:var(--text-secondary); flex-wrap:wrap; }
+  .date-range-picker input[type=date] { border:1px solid var(--border); background:var(--surface); border-radius:8px; padding:6px 8px; font-size:12.5px; color:var(--text-primary); }
+  .date-range-picker button { border:none; background:var(--navy-700); color:#fff; font-size:12.5px; font-weight:700; padding:7px 14px; border-radius:999px; cursor:pointer; }
+  .date-range-picker button:hover { opacity:.9; }
+  .date-range-picker .drp-reset { background:transparent; color:var(--text-secondary); border:1px solid var(--border); }
 
-  .plat-row { display:flex; align-items:center; gap:12px; width:100%; background:none; border:none; padding:8px 6px; border-radius:9px; text-align:left; color:var(--text-primary); }
-  .plat-row:hover { background:var(--surface-sunken); }
-  .chan-badge { flex:none; width:32px; height:32px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; font-size:13px; color:#fff; }
-  .plat-row .name { width:56px; flex:none; font-size:12.5px; font-weight:700; color:var(--text-secondary); }
-  .plat-row .track { flex:1; height:9px; border-radius:5px; background:var(--surface-sunken); overflow:hidden; }
-  .plat-row .fill { height:100%; border-radius:5px; }
-  .plat-row .pct { width:78px; flex:none; text-align:right; font-size:12.5px; font-weight:700; }
+  /* ---------- channel summary cards ---------- */
+  .channel-card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+  @media (max-width:900px) { .channel-card-grid { grid-template-columns:1fr; } }
+  .channel-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); padding:18px 20px; display:flex; flex-direction:column; gap:12px; cursor:pointer; text-align:left; width:100%; }
+  .channel-card:hover { border-color:var(--border-strong); }
+  .cc-head { display:flex; align-items:center; gap:10px; }
+  .cc-badge { flex:none; width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; font-family:var(--font-display); font-weight:700; font-size:14px; color:#fff; }
+  .cc-name { font-family:var(--font-display); font-weight:700; font-size:14px; }
+  .cc-total { margin-left:auto; font-family:var(--font-display); font-weight:700; font-size:20px; }
+  .cc-total .unit { font-size:12px; font-weight:600; color:var(--text-muted); margin-left:2px; }
+  .cc-rating { font-size:11.5px; color:var(--text-muted); }
+  .cc-bar-row { display:flex; align-items:center; gap:8px; font-size:12px; }
+  .cc-bar-label { width:34px; flex:none; font-weight:700; }
+  .cc-bar-label.pos { color:var(--good); }
+  .cc-bar-label.neg { color:var(--critical); }
+  .cc-bar-track { flex:1; height:8px; border-radius:4px; background:var(--surface-sunken); overflow:hidden; }
+  .cc-bar-fill { height:100%; border-radius:4px; }
+  .cc-bar-fill.pos { background:var(--good); }
+  .cc-bar-fill.neg { background:var(--critical); }
+  .cc-bar-count { width:74px; flex:none; text-align:right; color:var(--text-secondary); font-weight:600; }
 
   .section { margin-bottom:26px; scroll-margin-top:16px; }
   .section-title { font-size:16px; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
@@ -171,6 +177,10 @@
   .map-legend-item { display:flex; align-items:center; gap:6px; }
   .map-legend-dot { width:11px; height:11px; border-radius:50%; display:inline-block; border:2px solid #fff; box-shadow:0 0 0 1px var(--border-strong); }
   .map-legend-dot.self { background:var(--navy-700); }
+  .map-legend-dot.comp { background:var(--chart-1); }
+
+  .map-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .map-toolbar select { border:1px solid var(--border); background:var(--surface); border-radius:8px; padding:7px 10px; font-size:12.5px; color:var(--text-primary); min-width:220px; }
 
   .comp-marker { display:flex; flex-direction:column; align-items:center; pointer-events:none; }
   .comp-marker-badge {
@@ -181,7 +191,18 @@
     box-shadow:0 3px 10px rgba(15,23,42,0.25); font-family:var(--font-display);
   }
   .comp-marker-badge.self { background:var(--navy-700); color:#fff; border-color:var(--navy-700); }
-  .comp-marker-pointer { width:0; height:0; margin-top:-1px; border-left:7px solid transparent; border-right:7px solid transparent; border-top:9px solid var(--navy-700); }
+  .comp-marker-trend-badge { position:absolute; top:-11px; right:-9px; font-size:15px; line-height:1; filter:drop-shadow(0 1px 1px rgba(0,0,0,.3)); }
+  .comp-marker-pointer { width:0; height:0; margin-top:-1px; border-left:7px solid transparent; border-right:7px solid transparent; border-top:9px solid var(--chart-1); }
+  .comp-marker-badge.self ~ .comp-marker-pointer { border-top-color:var(--navy-700); }
+
+  /* ---------- VOC 급증 요약 패널 ---------- */
+  .surge-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; }
+  @media (max-width:820px) { .surge-grid { grid-template-columns:1fr; } }
+  .surge-card h3 { font-size:13px; margin-bottom:10px; }
+  .surge-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .surge-item { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:8px 10px; border-radius:9px; background:var(--surface-sunken); font-size:12.5px; }
+  .surge-item .si-name { font-weight:700; display:flex; align-items:center; gap:6px; }
+  .surge-item .si-detail { color:var(--text-muted); font-size:11.5px; }
 
   /* ---------- review section ---------- */
   .review-controls { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; }
@@ -216,7 +237,7 @@
 
   @media (max-width:900px) {
     .app-shell { flex-direction:column; }
-    .sidebar { width:100%; flex-direction:row; align-items:center; padding:10px 14px; gap:14px; overflow-x:auto; }
+    .sidebar { width:100%; height:auto; flex-direction:row; align-items:center; padding:10px 14px; gap:14px; overflow-x:auto; overflow-y:visible; }
     .sidebar-nav { flex-direction:row; }
     .nav-item span.txt2 { display:none; }
     .sidebar-foot { display:none; }
@@ -259,13 +280,16 @@
             <button data-range="3" aria-pressed="true">최근 3개월</button>
             <button data-range="6" aria-pressed="false">최근 6개월</button>
           </div>
+          <div class="date-range-picker">
+            <input type="date" id="customStart" aria-label="시작일">
+            <span>~</span>
+            <input type="date" id="customEnd" aria-label="종료일">
+            <button id="customApply" type="button">기간 적용</button>
+            <button id="customReset" type="button" class="drp-reset" hidden>초기화</button>
+          </div>
         </div>
-        <div class="kpi-grid" id="kpiGrid"></div>
-        <div class="card" id="platformCard">
-          <div class="card-sub" style="margin-bottom:6px;font-weight:700;color:var(--text-primary);font-size:13px;">플랫폼별 리뷰 건수 및 비중</div>
-          <div class="card-sub" id="platformCaption"></div>
-          <div id="platformList"></div>
-        </div>
+        <div class="card-sub" id="rangeCaption" style="margin-bottom:10px;"></div>
+        <div class="channel-card-grid" id="channelCardGrid"></div>
       </div>
 
       <div class="section" id="section-analysis">
@@ -306,12 +330,30 @@
         <div class="section-title">경쟁·지역 지도</div>
         <div class="card">
           <div class="card-sub" id="mapRegionLabel" style="margin-bottom:10px;font-weight:700;color:var(--text-primary);font-size:13px;"></div>
+          <div class="map-toolbar">
+            <select id="competitorSelect" aria-label="비교할 경쟁 병원 선택">
+              <option value="all">전체 경쟁병원 보기</option>
+            </select>
+          </div>
           <div id="competitorMap"></div>
-          <div class="map-legend">
+          <div class="map-legend" id="mapLegend">
             <span class="map-legend-item"><span class="map-legend-dot self"></span>자사(내 병원)</span>
-            <span class="map-legend-item" style="color:var(--text-muted);">경쟁 병원 데이터 준비 중 — 추후 온보딩 예정</span>
+            <span class="map-legend-item"><span class="map-legend-dot comp"></span>경쟁 병원</span>
+            <span class="map-legend-item">⚠️ 부정 급증</span>
+            <span class="map-legend-item">🟢 긍정 상승</span>
           </div>
         </div>
+        <div class="surge-grid">
+          <div class="card surge-card">
+            <h3 style="color:var(--good);">🟢 긍정 VOC 급증 병원</h3>
+            <ul class="surge-list" id="surgePositiveList"></ul>
+          </div>
+          <div class="card surge-card">
+            <h3 style="color:var(--critical);">⚠️ 부정 VOC 급증 병원</h3>
+            <ul class="surge-list" id="surgeNegativeList"></ul>
+          </div>
+        </div>
+        <div class="card-sub" style="margin-top:10px;">VOC 급증 기준: 현재 조회 기간 리뷰 3건 이상 AND 직전 동일 길이 기간 대비 50% 이상 증가.</div>
       </div>
 
       <div class="section" id="section-reviews">
@@ -483,89 +525,89 @@
 
   var REVIEWS = [];
   var HOSPITAL_META = null;
-  var state = { range: 3, channel: "all", search: "", negOnly: false };
+  var COMPETITOR_REVIEWS = {};
+  var state = { mode: "preset", range: 3, customStart: null, customEnd: null, channel: "all", search: "", negOnly: false };
 
-  function inRange(review, months) { return review.date && d(review.date) >= monthsAgo(months); }
-  function rangeReviews() { return REVIEWS.filter(function (r) { return inRange(r, state.range); }); }
-
-  // ---------------------------------------------------------------
-  // KPI cards
-  // ---------------------------------------------------------------
-  var ICONS = {
-    total: '<path d="M3 4h11v8H7l-3 3V12H3V4Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" fill="none"/>',
-    rating: '<path d="M9 2.2 10.9 6l4.2.6-3 3 .7 4.2L9 11.8 5.2 13.8l.7-4.2-3-3L7.1 6 9 2.2Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/>',
-    positive: '<path d="M3 15h1.6a2 2 0 0 0 2-1.6l.7-4.2a1 1 0 0 1 1-.8H10V4.5A1.5 1.5 0 0 1 11.5 3c.5 0 1 .3 1.2.8L13 7h2.2c1 0 1.7.9 1.4 1.9l-1.3 5A2 2 0 0 1 13.4 15H3Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/>',
-    negative: '<path d="M9 2.2 16.5 15H1.5L9 2.2Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" fill="none"/><path d="M9 7v3.4M9 12.6h.01" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>'
-  };
-
-  function renderKpis() {
-    var list = rangeReviews();
-    var total = list.length;
-    var rated = list.filter(function (r) { return r.rating != null; });
-    var avgRating = rated.length ? (rated.reduce(function (s, r) { return s + r.rating; }, 0) / rated.length) : null;
-    var posCount = list.filter(function (r) { return r.sentiment === "positive"; }).length;
-    var posPct = total ? Math.round((posCount / total) * 100) : 0;
-    var negRatingCount = rated.filter(function (r) { return r.rating <= 2; }).length;
-
-    var cards = [
-      { key: "total", label: "총 리뷰 수", value: total + '<span class="unit">건</span>', caption: "최근 " + state.range + "개월 기준", tint: "--surface-sunken", ink: "--navy-700" },
-      { key: "rating", label: "평균 평점", value: (avgRating != null ? avgRating.toFixed(1) : "—") + '<span class="unit">/ 5.0</span>', caption: rated.length ? ("별점 제공 " + rated.length + "건 기준") : "별점 제공 리뷰 없음(데이터 없음)", tint: "--warning-tint", ink: "--warning" },
-      { key: "positive", label: "긍정 비율", value: (total ? posPct + '<span class="unit">%</span>' : "—"), caption: total ? (posCount + "건 / " + total + "건") : "데이터 없음", tint: "--good-tint", ink: "--good" },
-      { key: "negative", label: "부정 리뷰 (2점 이하)", value: negRatingCount + '<span class="unit">건</span>', caption: "별점 기준 · 클릭 시 목록으로 이동", tint: "--critical-tint", ink: "--critical", clickable: true }
-    ];
-
-    var grid = document.getElementById("kpiGrid");
-    grid.innerHTML = "";
-    cards.forEach(function (c) {
-      var el = document.createElement(c.clickable ? "button" : "div");
-      el.className = "kpi-card" + (c.clickable ? " clickable" : "");
-      el.innerHTML =
-        '<span class="kpi-icon" style="background:' + css(c.tint) + ';color:' + css(c.ink) + '"><svg viewBox="0 0 18 18">' + ICONS[c.key] + '</svg></span>' +
-        '<span class="kpi-label">' + c.label + '</span>' +
-        '<span class="kpi-value tnum">' + c.value + '</span>' +
-        '<span class="kpi-caption">' + c.caption + '</span>';
-      if (c.clickable) {
-        el.addEventListener("click", function () {
-          state.negOnly = true;
-          document.getElementById("negToggle").setAttribute("aria-pressed", "true");
-          renderReviewList();
-          document.getElementById("section-reviews").scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      }
-      grid.appendChild(el);
-    });
+  function currentWindowBounds() {
+    if (state.mode === "custom" && state.customStart && state.customEnd) {
+      return { start: new Date(state.customStart + "T00:00:00+09:00"), end: new Date(state.customEnd + "T23:59:59+09:00") };
+    }
+    return { start: monthsAgo(state.range), end: new Date() };
+  }
+  function priorWindowBounds(cur) {
+    var lengthMs = cur.end.getTime() - cur.start.getTime();
+    var priorEnd = new Date(cur.start.getTime() - 1);
+    return { start: new Date(priorEnd.getTime() - lengthMs), end: priorEnd };
+  }
+  function rangeLabel() {
+    if (state.mode === "custom" && state.customStart && state.customEnd) return state.customStart + " ~ " + state.customEnd;
+    return "최근 " + state.range + "개월";
+  }
+  function rangeReviews() {
+    var b = currentWindowBounds();
+    return REVIEWS.filter(function (r) { return r.date && d(r.date) >= b.start && d(r.date) <= b.end; });
+  }
+  function countSentiment(reviews, sentiment, start, end) {
+    return reviews.filter(function (r) {
+      if (!r.date || r.sentiment !== sentiment) return false;
+      var rd = d(r.date);
+      return rd >= start && rd <= end;
+    }).length;
+  }
+  // VOC 급증 판정: 현재 조회 기간 리뷰 3건 이상 AND 직전 동일 길이 기간 대비 50% 이상 증가.
+  function computeSpike(reviews) {
+    var cur = currentWindowBounds();
+    var prior = priorWindowBounds(cur);
+    var recentPos = countSentiment(reviews, "positive", cur.start, cur.end);
+    var recentNeg = countSentiment(reviews, "negative", cur.start, cur.end);
+    var priorPos = countSentiment(reviews, "positive", prior.start, prior.end);
+    var priorNeg = countSentiment(reviews, "negative", prior.start, prior.end);
+    function isSpike(recent, priorCount) {
+      if (recent < 3) return false;
+      if (priorCount === 0) return true;
+      return (recent - priorCount) / priorCount >= 0.5;
+    }
+    return {
+      posSpike: isSpike(recentPos, priorPos), negSpike: isSpike(recentNeg, priorNeg),
+      recentPos: recentPos, recentNeg: recentNeg, priorPos: priorPos, priorNeg: priorNeg
+    };
   }
 
   // ---------------------------------------------------------------
-  // Platform breakdown
+  // 채널별 요약 카드 (구글/네이버/카카오맵 개별 카드로 분리)
   // ---------------------------------------------------------------
   var CHAN_BADGE = { naver: "N", kakao: "K", google: "G" };
-  function renderPlatformList() {
+  function renderChannelCards() {
     var list = rangeReviews();
-    var total = list.length;
-    document.getElementById("platformCaption").textContent = "최근 " + state.range + "개월 기준 · 총 " + total + "건 · 항목 클릭 시 리뷰 목록으로 이동";
-    var counts = { naver: 0, kakao: 0, google: 0 };
-    list.forEach(function (r) { if (counts[r.channel] != null) counts[r.channel]++; });
-
-    var wrap = document.getElementById("platformList");
-    wrap.innerHTML = "";
-    if (!total) { wrap.innerHTML = '<div class="empty-note">데이터 없음</div>'; return; }
+    document.getElementById("rangeCaption").textContent = rangeLabel() + " 기준 · 총 " + list.length + "건";
+    var grid = document.getElementById("channelCardGrid");
+    grid.innerHTML = "";
     ["naver", "kakao", "google"].forEach(function (ch) {
-      var c = counts[ch];
-      var pct = total ? Math.round((c / total) * 100) : 0;
+      var chReviews = list.filter(function (r) { return r.channel === ch; });
+      var total = chReviews.length;
+      var pos = chReviews.filter(function (r) { return r.sentiment === "positive"; }).length;
+      var neg = chReviews.filter(function (r) { return r.sentiment === "negative"; }).length;
+      var posPct = total ? Math.round((pos / total) * 100) : 0;
+      var negPct = total ? Math.round((neg / total) * 100) : 0;
+      var rated = chReviews.filter(function (r) { return r.rating != null; });
+      var avgRating = rated.length ? (rated.reduce(function (s, r) { return s + r.rating; }, 0) / rated.length) : null;
       var color = css(PLATFORM_VAR[ch]);
-      var btn = document.createElement("button");
-      btn.className = "plat-row";
-      btn.innerHTML =
-        '<span class="chan-badge" style="background:' + color + '">' + CHAN_BADGE[ch] + '</span>' +
-        '<span class="name">' + PLATFORM_LABEL[ch] + '</span>' +
-        '<span class="track"><span class="fill" style="width:' + pct + '%;background:' + color + '"></span></span>' +
-        '<span class="pct tnum">' + c + '건 · ' + pct + '%</span>';
-      btn.addEventListener("click", function () {
+      var card = document.createElement("button");
+      card.className = "channel-card";
+      card.innerHTML =
+        '<div class="cc-head">' +
+          '<span class="cc-badge" style="background:' + color + '">' + CHAN_BADGE[ch] + '</span>' +
+          '<span class="cc-name">' + PLATFORM_LABEL[ch] + '</span>' +
+          '<span class="cc-total tnum">' + total + '<span class="unit">건</span></span>' +
+        '</div>' +
+        '<div class="cc-rating">' + (avgRating != null ? ("평균 ★" + avgRating.toFixed(1)) : "별점 제공 리뷰 없음(데이터 없음)") + '</div>' +
+        '<div class="cc-bar-row"><span class="cc-bar-label pos">긍정</span><span class="cc-bar-track"><span class="cc-bar-fill pos" style="width:' + posPct + '%"></span></span><span class="cc-bar-count tnum">' + pos + '건 · ' + posPct + '%</span></div>' +
+        '<div class="cc-bar-row"><span class="cc-bar-label neg">부정</span><span class="cc-bar-track"><span class="cc-bar-fill neg" style="width:' + negPct + '%"></span></span><span class="cc-bar-count tnum">' + neg + '건 · ' + negPct + '%</span></div>';
+      card.addEventListener("click", function () {
         setChannelTab(ch);
         document.getElementById("section-reviews").scrollIntoView({ behavior: "smooth", block: "start" });
       });
-      wrap.appendChild(btn);
+      grid.appendChild(card);
     });
   }
 
@@ -664,7 +706,7 @@
   function renderPie() {
     var list = rangeReviews();
     var total = list.length;
-    document.getElementById("pieCaption").textContent = "최근 " + state.range + "개월 기준 · 총 " + total + "건";
+    document.getElementById("pieCaption").textContent = rangeLabel() + " 기준 · 총 " + total + "건";
     var counts = { naver: 0, kakao: 0, google: 0 };
     list.forEach(function (r) { if (counts[r.channel] != null) counts[r.channel]++; });
 
@@ -761,9 +803,27 @@
   }
 
   // ---------------------------------------------------------------
-  // 지도: 실제 자사 위치만 표시(Leaflet + OpenStreetMap). 경쟁 병원 수집은
-  // 이 프로젝트에서 아직 구축되지 않아 가짜 데이터를 넣지 않는다.
+  // 지도: 자사 위치 + 동일 행정동 경쟁병원(실제 수집 데이터, hospitals_meta.json의
+  // competitors 목록 기준). 드롭다운에서 특정 경쟁병원 하나만 골라볼 수도 있다.
   // ---------------------------------------------------------------
+  function competitorBadgeHtml(label, isSelf, trendIcon) {
+    return '<div class="comp-marker"><div class="comp-marker-badge' + (isSelf ? " self" : "") + '">' + escapeHtml(label) +
+      (trendIcon ? '<span class="comp-marker-trend-badge">' + trendIcon + '</span>' : "") +
+      '</div><div class="comp-marker-pointer"></div></div>';
+  }
+
+  function populateCompetitorSelect() {
+    var sel = document.getElementById("competitorSelect");
+    sel.innerHTML = '<option value="all">전체 경쟁병원 보기</option>';
+    var comps = (HOSPITAL_META && HOSPITAL_META.competitors) || [];
+    comps.forEach(function (c) {
+      var opt = document.createElement("option");
+      opt.value = c.id; opt.textContent = c.name;
+      sel.appendChild(opt);
+    });
+    sel.disabled = comps.length === 0;
+  }
+
   var mapInstance = null;
   function renderMap() {
     var mapEl = document.getElementById("competitorMap");
@@ -775,7 +835,7 @@
       mapEl.innerHTML = '<div class="empty-note" style="padding-top:150px;">지도 라이브러리(Leaflet)를 불러오지 못했습니다.</div>';
       return;
     }
-    if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+    if (mapInstance) { mapInstance.remove(); mapInstance = null; mapEl.innerHTML = ""; }
 
     var map = L.map(mapEl, { scrollWheelZoom: false }).setView([HOSPITAL_META.lat, HOSPITAL_META.lng], 16);
     mapInstance = map;
@@ -784,14 +844,61 @@
       maxZoom: 19
     }).addTo(map);
 
-    var label = HOSPITAL_META.name ? (HOSPITAL_META.name + " (자사)") : "내 병원";
-    var selfIcon = L.divIcon({
-      html: '<div class="comp-marker"><div class="comp-marker-badge self">' + label + '</div><div class="comp-marker-pointer"></div></div>',
-      className: "", iconSize: [0, 0], iconAnchor: [40, 46]
-    });
+    var selfLabel = HOSPITAL_META.name ? (HOSPITAL_META.name + " (자사)") : "내 병원";
+    var selfIcon = L.divIcon({ html: competitorBadgeHtml(selfLabel, true, null), className: "", iconSize: [0, 0], iconAnchor: [40, 46] });
     L.marker([HOSPITAL_META.lat, HOSPITAL_META.lng], { icon: selfIcon, zIndexOffset: 1000 }).addTo(map);
 
+    var selectEl = document.getElementById("competitorSelect");
+    var selectedId = selectEl ? selectEl.value : "all";
+    var comps = (HOSPITAL_META.competitors || []).filter(function (c) { return selectedId === "all" || c.id === selectedId; });
+
+    comps.forEach(function (c) {
+      var reviews = COMPETITOR_REVIEWS[c.id] || [];
+      var rated = reviews.filter(function (r) { return r.rating != null; });
+      var avgRating = rated.length ? (rated.reduce(function (s, r) { return s + r.rating; }, 0) / rated.length) : null;
+      var spike = reviews.length ? computeSpike(reviews) : { posSpike: false, negSpike: false };
+      var trendIcon = spike.negSpike ? "⚠️" : (spike.posSpike ? "🟢" : "");
+      var ratingText = avgRating != null ? avgRating.toFixed(1) : "—";
+      var label = c.name + " (★" + ratingText + " · " + reviews.length + "건)";
+      var icon = L.divIcon({ html: competitorBadgeHtml(label, false, trendIcon), className: "", iconSize: [0, 0], iconAnchor: [40, 46] });
+      L.marker([c.lat, c.lng], { icon: icon }).addTo(map);
+    });
+
     setTimeout(function () { map.invalidateSize(); }, 150);
+  }
+
+  // ---------------------------------------------------------------
+  // VOC 급증 요약 패널 (자사 + 경쟁병원 전체 대상)
+  // ---------------------------------------------------------------
+  function surgeEntityList() {
+    var arr = [{ name: (HOSPITAL_META && HOSPITAL_META.name) || "자사", reviews: REVIEWS }];
+    var comps = (HOSPITAL_META && HOSPITAL_META.competitors) || [];
+    comps.forEach(function (c) { arr.push({ name: c.name, reviews: COMPETITOR_REVIEWS[c.id] || [] }); });
+    return arr;
+  }
+
+  function renderSurgeList(elId, items) {
+    var el = document.getElementById(elId);
+    el.innerHTML = "";
+    if (!items.length) { el.innerHTML = '<li class="empty-note" style="padding:6px 0;">해당 없음</li>'; return; }
+    items.forEach(function (item) {
+      var li = document.createElement("li");
+      li.className = "surge-item";
+      li.innerHTML = '<span class="si-name">' + escapeHtml(item.name) + '</span><span class="si-detail">' + item.detail + '</span>';
+      el.appendChild(li);
+    });
+  }
+
+  function renderSurgePanel() {
+    var posList = [], negList = [];
+    surgeEntityList().forEach(function (e) {
+      if (!e.reviews.length) return;
+      var spike = computeSpike(e.reviews);
+      if (spike.posSpike) posList.push({ name: e.name, detail: spike.recentPos + "건 (이전 " + spike.priorPos + "건)" });
+      if (spike.negSpike) negList.push({ name: e.name, detail: spike.recentNeg + "건 (이전 " + spike.priorNeg + "건)" });
+    });
+    renderSurgeList("surgePositiveList", posList);
+    renderSurgeList("surgeNegativeList", negList);
   }
 
   // ---------------------------------------------------------------
@@ -818,7 +925,7 @@
 
   function renderReviewList() {
     var list = filteredReviews();
-    document.getElementById("reviewCountNote").textContent = list.length + "건 표시 중 (최근 " + state.range + "개월 기준)";
+    document.getElementById("reviewCountNote").textContent = list.length + "건 표시 중 (" + rangeLabel() + " 기준)";
     var wrap = document.getElementById("reviewList");
     wrap.innerHTML = "";
     if (!list.length) {
@@ -878,18 +985,43 @@
   var rangeButtons = document.querySelectorAll("#rangeGroup button");
   rangeButtons.forEach(function (btn) {
     btn.addEventListener("click", function () {
+      state.mode = "preset";
       state.range = parseInt(btn.getAttribute("data-range"), 10);
       rangeButtons.forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
+      document.getElementById("customReset").hidden = true;
       renderAll();
     });
   });
 
+  document.getElementById("customApply").addEventListener("click", function () {
+    var s = document.getElementById("customStart").value;
+    var e = document.getElementById("customEnd").value;
+    if (!s || !e || s > e) return;
+    state.mode = "custom";
+    state.customStart = s;
+    state.customEnd = e;
+    rangeButtons.forEach(function (b) { b.setAttribute("aria-pressed", "false"); });
+    document.getElementById("customReset").hidden = false;
+    renderAll();
+  });
+  document.getElementById("customReset").addEventListener("click", function () {
+    state.mode = "preset";
+    state.range = 3;
+    document.getElementById("customStart").value = "";
+    document.getElementById("customEnd").value = "";
+    this.hidden = true;
+    rangeButtons.forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-range") === "3" ? "true" : "false"); });
+    renderAll();
+  });
+  document.getElementById("competitorSelect").addEventListener("change", renderMap);
+
   function renderAll() {
-    renderKpis();
-    renderPlatformList();
+    renderChannelCards();
     renderPie();
     renderKeywordLists();
     renderReviewList();
+    renderMap();
+    renderSurgePanel();
   }
 
   function renderLastUpdated() {
@@ -907,7 +1039,7 @@
       document.getElementById("hospitalTitle").textContent = HOSPITAL_META.name + " VOC 통합 대시보드";
       document.getElementById("brandName").textContent = HOSPITAL_META.name;
       document.getElementById("brandMark").textContent = HOSPITAL_META.name.slice(0, 2);
-      document.getElementById("mapRegionLabel").textContent = HOSPITAL_META.name;
+      document.getElementById("mapRegionLabel").textContent = HOSPITAL_META.region_label ? (HOSPITAL_META.name + " · " + HOSPITAL_META.region_label) : HOSPITAL_META.name;
     } else if (hospitalId) {
       document.getElementById("hospitalTitle").textContent = decodeURIComponent(hospitalId) + " VOC 통합 대시보드";
       document.getElementById("brandName").textContent = decodeURIComponent(hospitalId);
@@ -943,11 +1075,18 @@
 
     HOSPITAL_META = hospitalId && metaAll[hospitalId] ? metaAll[hospitalId] : null;
 
+    COMPETITOR_REVIEWS = {};
+    if (HOSPITAL_META && HOSPITAL_META.competitors) {
+      HOSPITAL_META.competitors.forEach(function (c) {
+        COMPETITOR_REVIEWS[c.id] = allReviews.filter(function (r) { return r.hospital_id === c.id; });
+      });
+    }
+
     applyHospitalIdentity();
+    populateCompetitorSelect();
     renderLastUpdated();
-    renderAll();
     renderTrend();
-    renderMap();
+    renderAll();
     hideBanner();
 
     if (hospitalId && !REVIEWS.length) {
