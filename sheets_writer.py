@@ -13,12 +13,21 @@ HEADER = [
 ]
 
 
+def _row_is_blank(row):
+    return all(not str(cell).strip() for cell in row)
+
+
 def ensure_header(worksheet):
-    """시트가 비어 있으면 헤더를 쓰고, 이미 있으면 정확히 일치하는지만 확인한다.
-    다르면 조용히 덮어쓰지 않고 예외를 던진다 — 잘못된 시트에 계속 쓰는 사고를 막는다."""
+    """시트가 비어 있으면 A1에 헤더를 쓰고, 이미 있으면 정확히 일치하는지만
+    확인한다. 다르면 조용히 덮어쓰지 않고 예외를 던진다 — 잘못된 시트에 계속
+    쓰는 사고를 막는다.
+
+    새로 만든 Google Sheet는 get_all_values()가 완전히 빈 리스트가 아니라
+    빈 행 하나([[]])를 반환하기도 한다(실제 GitHub Actions 실행에서 확인됨) —
+    그래서 "리스트가 비었는지"가 아니라 "첫 행이 비었는지"로 판단한다."""
     values = worksheet.get_all_values()
-    if not values:
-        worksheet.append_row(HEADER)
+    if not values or _row_is_blank(values[0]):
+        worksheet.update("A1", [HEADER])
         return
     if values[0] != HEADER:
         raise ValueError(f"시트 헤더가 예상과 다릅니다: {values[0]}")

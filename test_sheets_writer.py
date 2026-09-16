@@ -16,6 +16,14 @@ class FakeWorksheet:
     def append_row(self, row):
         self.values.append(list(row))
 
+    def update(self, range_name, values):
+        # 단순화된 가짜 구현: 이 프로젝트에서는 헤더를 A1에 쓰는 용도로만 쓴다.
+        assert range_name == "A1", f"이 가짜 객체는 A1 범위만 지원함: {range_name!r}"
+        if not self.values:
+            self.values.append(list(values[0]))
+        else:
+            self.values[0] = list(values[0])
+
     def append_rows(self, rows, value_input_option=None):
         for row in rows:
             self.values.append(list(row))
@@ -32,6 +40,16 @@ def test_ensure_header_writes_header_when_sheet_empty():
     sheets_writer.ensure_header(ws)
     assert ws.values == [sheets_writer.HEADER], f"실제: {ws.values}"
     print("PASS: test_ensure_header_writes_header_when_sheet_empty")
+
+
+def test_ensure_header_writes_header_when_first_row_is_blank():
+    # 실제 GitHub Actions 실행에서 확인된 사례: 새로 만든 Google Sheet는
+    # get_all_values()가 완전히 빈 리스트([])가 아니라 빈 행 하나([[]])를
+    # 반환하기도 한다. 이 경우도 "헤더 없음"으로 취급해 A1에 헤더를 써야 한다.
+    ws = FakeWorksheet(initial_values=[[]])
+    sheets_writer.ensure_header(ws)
+    assert ws.values == [sheets_writer.HEADER], f"실제: {ws.values}"
+    print("PASS: test_ensure_header_writes_header_when_first_row_is_blank")
 
 
 def test_ensure_header_noop_when_header_already_correct():
@@ -107,6 +125,7 @@ def test_read_existing_reviews_returns_records():
 
 if __name__ == "__main__":
     test_ensure_header_writes_header_when_sheet_empty()
+    test_ensure_header_writes_header_when_first_row_is_blank()
     test_ensure_header_noop_when_header_already_correct()
     test_ensure_header_raises_when_mismatched()
     test_review_to_row()
