@@ -433,6 +433,7 @@
   function monthsAgo(n) { var t = new Date(); t.setMonth(t.getMonth() - n); return t; }
   function fmtMonth(dt) { return (dt.getMonth() + 1) + "월"; }
   function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+  function fmtDateInput(dt) { return dt.getFullYear() + "-" + pad2(dt.getMonth() + 1) + "-" + pad2(dt.getDate()); }
 
   function showBanner(text, isError) {
     var el = document.getElementById("statusBanner");
@@ -1038,6 +1039,11 @@
     });
   });
 
+  function syncCustomInputsToPreset() {
+    document.getElementById("customStart").value = fmtDateInput(monthsAgo(state.range));
+    document.getElementById("customEnd").value = fmtDateInput(new Date());
+  }
+
   var rangeButtons = document.querySelectorAll("#rangeGroup button");
   rangeButtons.forEach(function (btn) {
     btn.addEventListener("click", function () {
@@ -1045,9 +1051,11 @@
       state.range = parseInt(btn.getAttribute("data-range"), 10);
       rangeButtons.forEach(function (b) { b.setAttribute("aria-pressed", b === btn ? "true" : "false"); });
       document.getElementById("customReset").hidden = true;
+      syncCustomInputsToPreset();
       renderAll();
     });
   });
+  syncCustomInputsToPreset();
 
   document.getElementById("customApply").addEventListener("click", function () {
     var s = document.getElementById("customStart").value;
@@ -1063,10 +1071,9 @@
   document.getElementById("customReset").addEventListener("click", function () {
     state.mode = "preset";
     state.range = 3;
-    document.getElementById("customStart").value = "";
-    document.getElementById("customEnd").value = "";
     this.hidden = true;
     rangeButtons.forEach(function (b) { b.setAttribute("aria-pressed", b.getAttribute("data-range") === "3" ? "true" : "false"); });
+    syncCustomInputsToPreset();
     renderAll();
   });
   document.getElementById("competitorSelect").addEventListener("change", renderMap);
