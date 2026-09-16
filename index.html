@@ -136,7 +136,7 @@
   .cc-bar-label.pos { color:var(--good); }
   .cc-bar-label.neg { color:var(--critical); }
   .cc-bar-track { flex:1; height:8px; border-radius:4px; background:var(--surface-sunken); overflow:hidden; }
-  .cc-bar-fill { height:100%; border-radius:4px; }
+  .cc-bar-fill { display:block; height:100%; border-radius:4px; }
   .cc-bar-fill.pos { background:var(--good); }
   .cc-bar-fill.neg { background:var(--critical); }
   .cc-bar-count { width:74px; flex:none; text-align:right; color:var(--text-secondary); font-weight:600; }
@@ -161,7 +161,7 @@
   .kw-rank { width:16px; flex:none; color:var(--text-muted); font-family:var(--font-display); font-size:11px; }
   .kw-name { width:64px; flex:none; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .kw-track { flex:1; height:7px; border-radius:4px; background:var(--surface-sunken); overflow:hidden; }
-  .kw-fill { height:100%; border-radius:4px; }
+  .kw-fill { display:block; height:100%; border-radius:4px; }
   .kw-count { width:28px; text-align:right; color:var(--text-muted); flex:none; }
 
   .pie-wrap { display:flex; gap:20px; align-items:center; flex-wrap:wrap; }
@@ -310,6 +310,14 @@
         <div class="section-title">키워드 &amp; 추이</div>
         <div class="two-col">
           <div class="card">
+            <div class="card-sub" style="margin-bottom:6px;font-weight:700;color:var(--text-primary);font-size:13px;">채널별 비율</div>
+            <div class="card-sub" id="pieCaption"></div>
+            <div class="pie-wrap">
+              <svg id="pieChart" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="채널별 리뷰 비중"></svg>
+              <div class="pie-legend" id="pieLegend"></div>
+            </div>
+          </div>
+          <div class="card">
             <div class="card-sub" style="margin-bottom:6px;font-weight:700;color:var(--text-primary);font-size:13px;">6개월 긍정 vs 부정 추이</div>
             <div class="card-sub">기간 필터와 무관하게 항상 최근 6개월 고정</div>
             <div class="legend-row">
@@ -317,14 +325,6 @@
               <span class="item"><span class="swatch" style="background:var(--critical)"></span>부정</span>
             </div>
             <svg id="trendChart" width="100%" viewBox="0 0 560 220" role="img" aria-label="최근 6개월 긍정 대 부정 리뷰 추이"></svg>
-          </div>
-          <div class="card">
-            <div class="card-sub" style="margin-bottom:6px;font-weight:700;color:var(--text-primary);font-size:13px;">채널별 비율</div>
-            <div class="card-sub" id="pieCaption"></div>
-            <div class="pie-wrap">
-              <svg id="pieChart" width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="채널별 리뷰 비중"></svg>
-              <div class="pie-legend" id="pieLegend"></div>
-            </div>
           </div>
         </div>
         <div class="two-col" style="margin-top:16px;">
