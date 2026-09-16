@@ -744,25 +744,36 @@
     var cx = 70, cy = 70, r = 58, rInner = 36;
     var start = -90;
 
-    ["naver", "kakao", "google"].forEach(function (ch) {
-      var v = counts[ch];
-      if (!v || !total) return;
-      var angle = (v / total) * 360;
-      var end = start + angle;
-      var large = angle > 180 ? 1 : 0;
-      function pt(a, rad) { var rr = (a * Math.PI) / 180; return [cx + rad * Math.cos(rr), cy + rad * Math.sin(rr)]; }
-      var p1 = pt(start, r), p2 = pt(end, r), p3 = pt(end, rInner), p4 = pt(start, rInner);
+    function pt(a, rad) { var rr = (a * Math.PI) / 180; return [cx + rad * Math.cos(rr), cy + rad * Math.sin(rr)]; }
+    function addWedge(segStart, segAngle, color) {
+      var segEnd = segStart + segAngle;
+      var large = segAngle > 180 ? 1 : 0;
+      var p1 = pt(segStart, r), p2 = pt(segEnd, r), p3 = pt(segEnd, rInner), p4 = pt(segStart, rInner);
       var path = document.createElementNS(svgns, "path");
       var dAttr = "M " + p1[0].toFixed(1) + " " + p1[1].toFixed(1) +
         " A " + r + " " + r + " 0 " + large + " 1 " + p2[0].toFixed(1) + " " + p2[1].toFixed(1) +
         " L " + p3[0].toFixed(1) + " " + p3[1].toFixed(1) +
         " A " + rInner + " " + rInner + " 0 " + large + " 0 " + p4[0].toFixed(1) + " " + p4[1].toFixed(1) + " Z";
       path.setAttribute("d", dAttr);
-      path.setAttribute("fill", css(PLATFORM_VAR[ch]));
+      path.setAttribute("fill", color);
       path.setAttribute("stroke", css("--surface"));
       path.setAttribute("stroke-width", "2");
       svg.appendChild(path);
-      start = end;
+    }
+
+    ["naver", "kakao", "google"].forEach(function (ch) {
+      var v = counts[ch];
+      if (!v || !total) return;
+      var angle = (v / total) * 360;
+      var color = css(PLATFORM_VAR[ch]);
+      if (angle >= 359.99) {
+        // 100%(단일 채널) 구간은 시작점=끝점이 겹쳐 브라우저가 호를 그리지 못하므로 반원 2개로 분할
+        addWedge(start, 180, color);
+        addWedge(start + 180, 180, color);
+      } else {
+        addWedge(start, angle, color);
+      }
+      start += angle;
     });
 
     var label = document.createElementNS(svgns, "text");
