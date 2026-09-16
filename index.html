@@ -130,7 +130,8 @@
   .cc-total { margin-left:auto; font-family:var(--font-display); font-weight:700; font-size:20px; }
   .cc-total .unit { font-size:12px; font-weight:600; color:var(--text-muted); margin-left:2px; }
   .cc-rating { font-size:11.5px; color:var(--text-muted); }
-  .cc-bar-row { display:flex; align-items:center; gap:8px; font-size:12px; }
+  .cc-bar-row { display:flex; align-items:center; gap:8px; font-size:12px; padding:4px; margin:-4px; border-radius:8px; cursor:pointer; }
+  .cc-bar-row:hover { background:var(--surface-sunken); }
   .cc-bar-label { width:34px; flex:none; font-weight:700; }
   .cc-bar-label.pos { color:var(--good); }
   .cc-bar-label.neg { color:var(--critical); }
@@ -155,7 +156,8 @@
   .kw-card h3 { font-size:13px; display:flex; align-items:center; gap:7px; margin-bottom:12px; }
   .kw-card h3 svg { width:14px; height:14px; }
   .kw-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
-  .kw-list li { display:flex; align-items:center; gap:9px; font-size:12.5px; }
+  .kw-list li { display:flex; align-items:center; gap:9px; font-size:12.5px; cursor:pointer; padding:3px 4px; margin:-3px -4px; border-radius:7px; }
+  .kw-list li:hover { background:var(--surface-sunken); }
   .kw-rank { width:16px; flex:none; color:var(--text-muted); font-family:var(--font-display); font-size:11px; }
   .kw-name { width:64px; flex:none; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .kw-track { flex:1; height:7px; border-radius:4px; background:var(--surface-sunken); overflow:hidden; }
@@ -235,6 +237,17 @@
 
   footer.note { margin-top:8px; padding-top:16px; border-top:1px solid var(--border); font-size:12px; color:var(--text-muted); line-height:1.7; }
 
+  /* ---------- modal ---------- */
+  .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,0.55); z-index:2000; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .modal-overlay[hidden] { display:none; }
+  .modal-box { background:var(--surface); border-radius:16px; max-width:680px; width:100%; max-height:82vh; display:flex; flex-direction:column; box-shadow:var(--shadow); }
+  .modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 20px; border-bottom:1px solid var(--border); flex:none; }
+  .modal-head h3 { font-size:14.5px; }
+  .modal-close { border:none; background:var(--surface-sunken); color:var(--text-secondary); width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:16px; line-height:1; flex:none; }
+  .modal-close:hover { background:var(--border); }
+  #modalCount { padding:10px 20px 0; margin-bottom:0; }
+  #modalReviewList { padding:12px 20px 20px; overflow-y:auto; }
+
   @media (max-width:900px) {
     .app-shell { flex-direction:column; }
     .sidebar { width:100%; height:auto; flex-direction:row; align-items:center; padding:10px 14px; gap:14px; overflow-x:auto; overflow-y:visible; }
@@ -288,6 +301,7 @@
             <button id="customReset" type="button" class="drp-reset" hidden>초기화</button>
           </div>
         </div>
+        <div class="section-title" style="margin-bottom:4px;">플랫폼별 리뷰 집계</div>
         <div class="card-sub" id="rangeCaption" style="margin-bottom:10px;"></div>
         <div class="channel-card-grid" id="channelCardGrid"></div>
       </div>
@@ -386,6 +400,17 @@
         <span class="tnum">confirmed</span>가 <b>미확정</b>으로 표시된 리뷰는 규칙기반 분류 점수가 애매해 추정하지 않고 남겨둔 것입니다.
       </footer>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h3 id="modalTitle"></h3>
+      <button class="modal-close" id="modalClose" type="button" aria-label="닫기">&times;</button>
+    </div>
+    <div class="review-count-note" id="modalCount"></div>
+    <div class="review-list" id="modalReviewList"></div>
   </div>
 </div>
 
@@ -592,8 +617,10 @@
       var rated = chReviews.filter(function (r) { return r.rating != null; });
       var avgRating = rated.length ? (rated.reduce(function (s, r) { return s + r.rating; }, 0) / rated.length) : null;
       var color = css(PLATFORM_VAR[ch]);
-      var card = document.createElement("button");
+      var card = document.createElement("div");
       card.className = "channel-card";
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
       card.innerHTML =
         '<div class="cc-head">' +
           '<span class="cc-badge" style="background:' + color + '">' + CHAN_BADGE[ch] + '</span>' +
@@ -601,11 +628,11 @@
           '<span class="cc-total tnum">' + total + '<span class="unit">건</span></span>' +
         '</div>' +
         '<div class="cc-rating">' + (avgRating != null ? ("평균 ★" + avgRating.toFixed(1)) : "별점 제공 리뷰 없음(데이터 없음)") + '</div>' +
-        '<div class="cc-bar-row"><span class="cc-bar-label pos">긍정</span><span class="cc-bar-track"><span class="cc-bar-fill pos" style="width:' + posPct + '%"></span></span><span class="cc-bar-count tnum">' + pos + '건 · ' + posPct + '%</span></div>' +
-        '<div class="cc-bar-row"><span class="cc-bar-label neg">부정</span><span class="cc-bar-track"><span class="cc-bar-fill neg" style="width:' + negPct + '%"></span></span><span class="cc-bar-count tnum">' + neg + '건 · ' + negPct + '%</span></div>';
-      card.addEventListener("click", function () {
-        setChannelTab(ch);
-        document.getElementById("section-reviews").scrollIntoView({ behavior: "smooth", block: "start" });
+        '<div class="cc-bar-row" data-sentiment="positive"><span class="cc-bar-label pos">긍정</span><span class="cc-bar-track"><span class="cc-bar-fill pos" style="width:' + posPct + '%"></span></span><span class="cc-bar-count tnum">' + pos + '건 · ' + posPct + '%</span></div>' +
+        '<div class="cc-bar-row" data-sentiment="negative"><span class="cc-bar-label neg">부정</span><span class="cc-bar-track"><span class="cc-bar-fill neg" style="width:' + negPct + '%"></span></span><span class="cc-bar-count tnum">' + neg + '건 · ' + negPct + '%</span></div>';
+      card.addEventListener("click", function (e) {
+        var barRow = e.target.closest(".cc-bar-row");
+        openChannelModal(ch, barRow ? barRow.getAttribute("data-sentiment") : null);
       });
       grid.appendChild(card);
     });
@@ -783,7 +810,7 @@
       return Object.keys(freq).map(function (k) { return { kw: k, n: freq[k] }; })
         .sort(function (a, b) { return b.n - a.n; }).slice(0, 5);
     }
-    function renderList(elId, items, color) {
+    function renderList(elId, items, color, kind) {
       var el = document.getElementById(elId);
       el.innerHTML = "";
       if (!items.length) { el.innerHTML = '<li class="empty-note" style="padding:6px 0;">데이터 없음</li>'; return; }
@@ -795,11 +822,12 @@
           '<span class="kw-name" title="' + item.kw + '">' + item.kw + '</span>' +
           '<span class="kw-track"><span class="kw-fill" style="width:' + (item.n / max * 100) + '%;background:' + color + '"></span></span>' +
           '<span class="kw-count tnum">' + item.n + '</span>';
+        li.addEventListener("click", function () { openKeywordModal(item.kw, kind); });
         el.appendChild(li);
       });
     }
-    renderList("kwPositive", topFor("pos"), css("--good"));
-    renderList("kwNegative", topFor("neg"), css("--critical"));
+    renderList("kwPositive", topFor("pos"), css("--good"), "pos");
+    renderList("kwNegative", topFor("neg"), css("--critical"), "neg");
   }
 
   // ---------------------------------------------------------------
@@ -868,13 +896,11 @@
   }
 
   // ---------------------------------------------------------------
-  // VOC 급증 요약 패널 (자사 + 경쟁병원 전체 대상)
+  // VOC 급증 요약 패널 (자사는 제외하고 주변 경쟁병원만 순위에 노출)
   // ---------------------------------------------------------------
   function surgeEntityList() {
-    var arr = [{ name: (HOSPITAL_META && HOSPITAL_META.name) || "자사", reviews: REVIEWS }];
     var comps = (HOSPITAL_META && HOSPITAL_META.competitors) || [];
-    comps.forEach(function (c) { arr.push({ name: c.name, reviews: COMPETITOR_REVIEWS[c.id] || [] }); });
-    return arr;
+    return comps.map(function (c) { return { name: c.name, reviews: COMPETITOR_REVIEWS[c.id] || [] }; });
   }
 
   function renderSurgeList(elId, items) {
@@ -923,33 +949,63 @@
     });
   }
 
+  function reviewItemHtml(r) {
+    var isNeg = r.sentiment === "negative" || (r.rating != null && r.rating <= 2);
+    var sentLabel = { positive: "긍정", neutral: "중립", negative: "부정" }[r.sentiment] || "중립";
+    return '<div class="review-item' + (isNeg ? " is-negative" : "") + '">' +
+      '<div class="r-top">' +
+        '<span class="chip" style="background:' + css(PLATFORM_VAR[r.channel]) + '">' + PLATFORM_LABEL[r.channel] + '</span>' +
+        '<span class="r-date tnum">' + (r.date || "날짜 없음") + '</span>' +
+        '<span class="r-author">' + escapeHtml(r.author) + (r.rating ? " · ★" + r.rating : "") + '</span>' +
+        (r.confirmed ? "" : '<span class="badge unconfirmed">미확정</span>') +
+        (isNeg ? '<span class="r-neg-tag">부정 리뷰</span>' : "") +
+        '<span class="r-sent ' + r.sentiment + '">' + sentLabel + '</span>' +
+      '</div>' +
+      '<p>' + escapeHtml(r.content) + '</p>' +
+      (r.keywords.length ? '<div class="r-kw">' + r.keywords.map(function (k) { return "<span>#" + escapeHtml(k) + "</span>"; }).join("") + '</div>' : "") +
+    '</div>';
+  }
+
+  function sortByDateDesc(list) {
+    return list.slice().sort(function (a, b) {
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return d(b.date) - d(a.date);
+    });
+  }
+
   function renderReviewList() {
     var list = filteredReviews();
     document.getElementById("reviewCountNote").textContent = list.length + "건 표시 중 (" + rangeLabel() + " 기준)";
     var wrap = document.getElementById("reviewList");
-    wrap.innerHTML = "";
-    if (!list.length) {
-      wrap.innerHTML = '<div class="empty-note">조건에 맞는 리뷰가 없습니다 (데이터 없음).</div>';
-      return;
-    }
-    list.forEach(function (r) {
-      var isNeg = r.sentiment === "negative" || (r.rating != null && r.rating <= 2);
-      var sentLabel = { positive: "긍정", neutral: "중립", negative: "부정" }[r.sentiment] || "중립";
-      var item = document.createElement("div");
-      item.className = "review-item" + (isNeg ? " is-negative" : "");
-      item.innerHTML =
-        '<div class="r-top">' +
-          '<span class="chip" style="background:' + css(PLATFORM_VAR[r.channel]) + '">' + PLATFORM_LABEL[r.channel] + '</span>' +
-          '<span class="r-date tnum">' + (r.date || "날짜 없음") + '</span>' +
-          '<span class="r-author">' + escapeHtml(r.author) + (r.rating ? " · ★" + r.rating : "") + '</span>' +
-          (r.confirmed ? "" : '<span class="badge unconfirmed">미확정</span>') +
-          (isNeg ? '<span class="r-neg-tag">부정 리뷰</span>' : "") +
-          '<span class="r-sent ' + r.sentiment + '">' + sentLabel + '</span>' +
-        '</div>' +
-        '<p>' + escapeHtml(r.content) + '</p>' +
-        (r.keywords.length ? '<div class="r-kw">' + r.keywords.map(function (k) { return "<span>#" + escapeHtml(k) + "</span>"; }).join("") + '</div>' : "");
-      wrap.appendChild(item);
-    });
+    wrap.innerHTML = list.length ? list.map(reviewItemHtml).join("") : '<div class="empty-note">조건에 맞는 리뷰가 없습니다 (데이터 없음).</div>';
+  }
+
+  // ---------------------------------------------------------------
+  // 상세 원본 리뷰 모달
+  // ---------------------------------------------------------------
+  function openModal(title, list) {
+    document.getElementById("modalTitle").textContent = title;
+    document.getElementById("modalCount").textContent = list.length + "건";
+    var wrap = document.getElementById("modalReviewList");
+    wrap.innerHTML = list.length ? sortByDateDesc(list).map(reviewItemHtml).join("") : '<div class="empty-note">해당 조건의 리뷰가 없습니다 (데이터 없음).</div>';
+    document.getElementById("modalOverlay").hidden = false;
+  }
+  function closeModal() { document.getElementById("modalOverlay").hidden = true; }
+  document.getElementById("modalClose").addEventListener("click", closeModal);
+  document.getElementById("modalOverlay").addEventListener("click", function (e) { if (e.target === this) closeModal(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") closeModal(); });
+
+  function openChannelModal(ch, sentiment) {
+    var list = rangeReviews().filter(function (r) { return r.channel === ch && (!sentiment || r.sentiment === sentiment); });
+    var sentLabel = sentiment === "positive" ? " · 긍정" : (sentiment === "negative" ? " · 부정" : "");
+    openModal(PLATFORM_LABEL[ch] + sentLabel + " 리뷰 원본 (" + rangeLabel() + ")", list);
+  }
+
+  function openKeywordModal(keyword, kind) {
+    var sentimentKey = kind === "pos" ? "positive" : "negative";
+    var list = rangeReviews().filter(function (r) { return r.sentiment === sentimentKey && r.keywords.indexOf(keyword) !== -1; });
+    openModal("#" + keyword + " 포함 " + (kind === "pos" ? "긍정" : "부정") + " 리뷰 (" + rangeLabel() + ")", list);
   }
 
   function setChannelTab(ch) {
