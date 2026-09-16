@@ -24,6 +24,13 @@ _CONFIRM_THRESHOLD = 2
 _PRE_NEGATION_RE = re.compile(r"(안|못)\s*$")
 _POST_NEGATION_RE = re.compile(r"^\s*(하지|치|지)?\s*(않|안)")
 
+# KNU 사전에 그 자체로 실려 있지만, 실제로는 독립된 감성 단어가 아니라
+# 동사 활용형 어미 조각이라 무관한 문맥에서 오탐을 일으키는 항목들.
+# 형태소 분석기 없이는 일반화된 해결이 어려워 실제 오분류가 확인된 항목만
+# 개별 제외한다(2026-09-16, "눈이 많이 처져서 고민하다가..." 긍정 후기가
+# "처져서"의 "져서"(-1)+"걱정"(-2)+"ㅎㅎ"(+1)=score -2로 부정 확정되던 사례).
+_EXCLUDED_WORDS = {"져서"}
+
 
 def _load_lexicon():
     with open(_DATA_DIR / "knu_sentiment_lexicon.json", encoding="utf-8") as f:
@@ -31,7 +38,11 @@ def _load_lexicon():
     with open(_DATA_DIR / "hospital_domain_lexicon.json", encoding="utf-8") as f:
         domain = json.load(f)
     lexicon.update(domain)  # 병원 특화 사전이 KNU 기본값을 덮어씀
-    return {word: polarity for word, polarity in lexicon.items() if len(word) >= 2}
+    return {
+        word: polarity
+        for word, polarity in lexicon.items()
+        if len(word) >= 2 and word not in _EXCLUDED_WORDS
+    }
 
 
 _LEXICON = _load_lexicon()

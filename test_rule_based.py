@@ -74,6 +74,21 @@ def test_ambiguous_text_marked_unconfirmed():
     print("PASS: test_ambiguous_text_marked_unconfirmed")
 
 
+def test_droop_verb_ending_not_treated_as_sentiment_word():
+    # 실제 오분류 사례(2026-09-16, 강남제이스타의원): 명백한 긍정 후기인데
+    # "처져서"의 활용형 어미 조각 "져서"가 KNU 사전에 독립 단어(-1)로 실려
+    # "걱정"(-2)과 합산돼 score -2로 부정 확정됐었다. "져서"를 제외 목록에
+    # 넣어 더는 매칭되지 않아야 한다.
+    content = (
+        "눈이 많이 처져서 고민하다가 수술했어요. 처음엔 붓기 때문에 걱정했는데 "
+        "자리 잡고 나니 훨씬 또렷하고 자연스러워졌어요. 진작 할걸 그랬네요ㅎㅎ"
+    )
+    result = classify({"rating": None, "content": content})
+    assert "져서" not in result["matched_words"], f"실제: {result}"
+    assert result["sentiment"] != "부정", f"실제: {result}"
+    print("PASS: test_droop_verb_ending_not_treated_as_sentiment_word")
+
+
 if __name__ == "__main__":
     test_rating_negative_confirmed()
     test_rating_positive_confirmed()
@@ -84,3 +99,4 @@ if __name__ == "__main__":
     test_negation_suffix_flips_polarity()
     test_domain_phrase_wait_time()
     test_ambiguous_text_marked_unconfirmed()
+    test_droop_verb_ending_not_treated_as_sentiment_word()
