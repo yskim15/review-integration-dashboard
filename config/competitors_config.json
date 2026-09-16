@@ -1,0 +1,72 @@
+{
+  "_comment": "행정동(무실동) 기준 강남제이스타의원의 실제 경쟁 병원. 이름/좌표/주소/채널 URL은 2026-09-11~12 '리뷰 컨트롤타워' 프로젝트에서 카카오맵/구글맵으로 실측 확인된 값을 그대로 재사용한다(가짜 데이터 아님). naver_place_url이 빈 문자열인 곳은 해당 채널을 찾지 못한 것으로, 그 채널만 수집에서 건너뛴다.",
+  "self_hospital_id": "gangnam_jstar",
+  "dong": "무실동",
+  "competitors": [
+    {
+      "competitor_id": "comp_audrey",
+      "name": "오드리의원피부과",
+      "category": "피부과",
+      "lat": 37.3349076,
+      "lng": 127.9303302,
+      "address": "강원특별자치도 원주시 무실동 1857-10",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/489868283",
+        "google_place_id": "0x3563752029cc3edb:0xe57f0d77e2fe0289",
+        "naver_place_url": "https://booking.naver.com/booking/13/bizes/1097127"
+      }
+    },
+    {
+      "competitor_id": "comp_snow",
+      "name": "스노우의원 원주점",
+      "category": "피부과·성형외과",
+      "lat": 37.3341504,
+      "lng": 127.9312276,
+      "address": "강원특별자치도 원주시 무실동 1857-6",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/1954587210",
+        "google_place_id": "0x35637529e8077fe5:0x8beb7a968ff77985",
+        "naver_place_url": "https://m.place.naver.com/hospital/1257710304/review/visitor"
+      }
+    },
+    {
+      "competitor_id": "comp_dodana",
+      "name": "도다나피부과의원",
+      "category": "피부과",
+      "lat": 37.3340104,
+      "lng": 127.9312276,
+      "address": "강원특별자치도 원주시 무실동 1857-6",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/262226489",
+        "google_place_id": "0x3563758ac4f80f23:0x18d044a90c353c30",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_reblum",
+      "name": "리블룸의원",
+      "category": "피부과·성형외과",
+      "lat": 37.3331074,
+      "lng": 127.9302549,
+      "address": "강원특별자치도 원주시 무실동 1852-1",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/1670625541",
+        "google_place_id": "0x356375eedb3550a1:0xd18a0acfca4aafe9",
+        "naver_place_url": "https://booking.naver.com/booking/13/bizes/1213058"
+      }
+    },
+    {
+      "competitor_id": "comp_goeun",
+      "name": "고은미래의원 원주점",
+      "category": "피부과",
+      "lat": 37.3358834,
+      "lng": 127.9287155,
+      "address": "강원특별자치도 원주시 무실동 1642-3",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/17911852",
+        "google_place_id": "0x35637449b76d7647:0x42bb4a6d92b4512",
+        "naver_place_url": ""
+      }
+    }
+  ]
+}

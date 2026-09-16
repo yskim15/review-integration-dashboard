@@ -18,11 +18,12 @@ from collectors import google, kakao, naver
 from collectors.base import safe_run
 
 CONFIG_PATH = Path(__file__).resolve().parent / "config" / "hospitals_config.json"
+COMPETITORS_CONFIG_PATH = Path(__file__).resolve().parent / "config" / "competitors_config.json"
 
 _CHANNEL_COLLECTORS = (
-    ("네이버", naver),
-    ("카카오맵", kakao),
-    ("구글", google),
+    ("네이버", naver, "naver_place_url"),
+    ("카카오맵", kakao, "kakao_place_url"),
+    ("구글", google, "google_place_id"),
 )
 
 
@@ -31,12 +32,35 @@ def load_hospitals():
         return json.load(f)["hospitals"]
 
 
+def load_competitors():
+    """경쟁 병원도 동일한 hospital 형태({hospital_id, hospital_name, channels})로
+    반환해, collect_hospital 이하 파이프라인을 그대로 재사용할 수 있게 한다.
+    naver_place_url이 빈 문자열인 곳은 그 채널을 못 찾은 것 — 채널만 건너뛴다."""
+    if not COMPETITORS_CONFIG_PATH.exists():
+        return []
+    with open(COMPETITORS_CONFIG_PATH, encoding="utf-8") as f:
+        data = json.load(f)
+    return [
+        {
+            "hospital_id": c["competitor_id"],
+            "hospital_name": c["name"],
+            "channels": c["channels"],
+        }
+        for c in data.get("competitors", [])
+    ]
+
+
 def collect_hospital(hospital):
     """모든 채널을 수집해 (전체 리뷰 목록, 실패 메시지 목록)을 반환한다.
-    한 채널이 실패해도 나머지 채널 수집은 계속 진행한다(설계문서 7절)."""
+    채널 URL이 설정 안 된 경우(경쟁병원 일부처럼)는 호출 자체를 건너뛰고
+    에러로 취급하지 않는다. 설정된 채널이 실패하면 나머지는 계속 진행한다
+    (설계문서 7절)."""
     raw_reviews = []
     errors = []
-    for channel_name, collector_module in _CHANNEL_COLLECTORS:
+    channels = hospital.get("channels", {})
+    for channel_name, collector_module, config_key in _CHANNEL_COLLECTORS:
+        if not channels.get(config_key):
+            continue
         result, err = safe_run(hospital["hospital_id"], channel_name, collector_module.collect_full, hospital)
         if err:
             errors.append(err)
@@ -46,7 +70,7 @@ def collect_hospital(hospital):
 
 
 def run(hospital_id_filter=None):
-    hospitals = load_hospitals()
+    hospitals = load_hospitals() + load_competitors()
     if hospital_id_filter:
         hospitals = [h for h in hospitals if h["hospital_id"] == hospital_id_filter]
         if not hospitals:
