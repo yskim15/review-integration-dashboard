@@ -1,0 +1,18 @@
+{
+  "_comment": "병원별 채널 원본 페이지 URL 매핑. 신규 병원 추가는 add_hospital.py(추후 계획)로 관리 예정.",
+  "hospitals": [
+    {
+      "hospital_id": "gangnam_jstar",
+      "hospital_name": "강남제이스타의원",
+      "category": "피부과·성형외과",
+      "lat": 37.3351531,
+      "lng": 127.9299823,
+      "address": "강원특별자치도 원주시 무실동 1857-10",
+      "channels": {
+        "google_place_id": "0x356375004dbd9f51:0x8ef973b4ca38fc55",
+        "naver_place_url": "https://m.place.naver.com/hospital/31605858/review/visitor",
+        "kakao_place_url": "https://place.map.kakao.com/18731017"
+      }
+    }
+  ]
+}
