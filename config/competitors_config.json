@@ -1,7 +1,7 @@
 {
-  "_comment": "행정동(무실동) 기준 강남제이스타의원의 실제 경쟁 병원. 이름/좌표/주소/채널 URL은 2026-09-11~12 '리뷰 컨트롤타워' 프로젝트에서 카카오맵/구글맵으로 실측 확인된 값을 그대로 재사용한다(가짜 데이터 아님). naver_place_url이 빈 문자열인 곳은 해당 채널을 찾지 못한 것으로, 그 채널만 수집에서 건너뛴다.",
+  "_comment": "원주시 전체 기준 강남제이스타의원의 실제 경쟁 병원(피부과·성형외과). 처음엔 행정동(무실동) 5곳만 등록했다가, 2026-09-22 상권 분석 범위를 구/시 단위로 넓히면서 카카오맵/구글맵으로 '원주시 피부과'(21건)·'원주시 성형외과'(8건)를 전수 검색해 원주시 전역의 실제 경쟁 병원 17곳(단구동 청담심스 포함)을 추가로 확인해 총 22곳이 되었다. 이름/좌표/주소/채널 URL은 각 업체 카카오맵·구글맵 페이지에서 직접 확인한 실측값이다(가짜 데이터 아님). naver_place_url이 빈 문자열인 곳은 이번 조사에서 채널을 찾지 못한 것으로, 그 채널만 수집에서 건너뛴다. comp_midream은 구글맵에 등록되지 않은 업체라 좌표가 인접 건물 기준 근사치다(거리·표시용일 뿐 수집 채널에는 영향 없음).",
   "self_hospital_id": "gangnam_jstar",
-  "dong": "무실동",
+  "region": "원주시 전체 (2026-09-22 행정동→시 단위로 확장)",
   "competitors": [
     {
       "competitor_id": "comp_audrey",
@@ -65,6 +65,227 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/17911852",
         "google_place_id": "0x35637449b76d7647:0x42bb4a6d92b4512",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_cheongdam",
+      "name": "청담심스성형외과의원",
+      "category": "성형외과",
+      "lat": 37.33113,
+      "lng": 127.9474726,
+      "address": "강원특별자치도 원주시 단구동 1516-3",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/12813224",
+        "google_place_id": "0x356375b9e8e72c87:0x91f71bfefffe3ec0",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_vance",
+      "name": "밴스의원 원주",
+      "category": "피부과·성형외과",
+      "lat": 37.3295179,
+      "lng": 127.9507992,
+      "address": "강원특별자치도 원주시 단구동 1026-8",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/80694422",
+        "google_place_id": "0x35637500444ab893:0x1d4f70eb0f6f0307",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_yonsei",
+      "name": "연세피부과의원",
+      "category": "피부과",
+      "lat": 37.3496724,
+      "lng": 127.9485529,
+      "address": "강원특별자치도 원주시 일산동 52-2",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/11105311",
+        "google_place_id": "0x356375007eeffca5:0xe08f8ad3d6c62e7f",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_doctorskin",
+      "name": "닥터스킨피부과의원",
+      "category": "피부과",
+      "lat": 37.3302255,
+      "lng": 127.9495888,
+      "address": "강원특별자치도 원주시 단구동 1512-1",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/8204461",
+        "google_place_id": "0x356375b974bb0ee5:0x6829ebf731353f9b",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_tatoa",
+      "name": "타토아의원 원주점",
+      "category": "피부과",
+      "lat": 37.3300006,
+      "lng": 127.9499836,
+      "address": "강원특별자치도 원주시 단구동 1512-2",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/25689416",
+        "google_place_id": "0x356375b912a779c9:0x758d818a870c8b0d",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_toxnfill",
+      "name": "톡스앤필의원 원주점",
+      "category": "피부과",
+      "lat": 37.3440527,
+      "lng": 127.9293669,
+      "address": "강원특별자치도 원주시 단계동 881-2",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/1067082091",
+        "google_place_id": "0x35637515b85520df:0x9448d99866ccba0",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_goeuneuiwon",
+      "name": "고은의원",
+      "category": "피부과",
+      "lat": 37.3471362,
+      "lng": 127.9282864,
+      "address": "강원특별자치도 원주시 단계동 1117-6",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/27308787",
+        "google_place_id": "0x35637451b1a90f23:0xf1f879e873f6c2df",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_baekderma",
+      "name": "백피부과의원",
+      "category": "피부과",
+      "lat": 37.3497456,
+      "lng": 127.9482982,
+      "address": "강원특별자치도 원주시 일산동 52-1",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/10385545",
+        "google_place_id": "0x35637508c92faadd:0x7b6449f1192b42c5",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_wonders",
+      "name": "원더스의원",
+      "category": "피부과",
+      "lat": 37.3440314,
+      "lng": 127.9297012,
+      "address": "강원특별자치도 원주시 단계동 881-3",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/1873110319",
+        "google_place_id": "0x35637522cf2dcad7:0x721b128e1318f789",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_bllivi",
+      "name": "블리비의원 원주점",
+      "category": "피부과",
+      "lat": 37.3307188,
+      "lng": 127.9488553,
+      "address": "강원특별자치도 원주시 단구동 1511-2",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/328994607",
+        "google_place_id": "0x356375b99bd648db:0xf41b5c81d314c0aa",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_kangyc",
+      "name": "강윤철피부과의원",
+      "category": "피부과",
+      "lat": 37.3503173,
+      "lng": 127.948466,
+      "address": "강원특별자치도 원주시 중앙동 59-14",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/8163267",
+        "google_place_id": "0x35637508dbcccdc9:0x212fdfcd8915666f",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_parkhm",
+      "name": "박현민성형외과의원",
+      "category": "성형외과",
+      "lat": 37.3440809,
+      "lng": 127.9288973,
+      "address": "강원특별자치도 원주시 단계동 879-5",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/191233966",
+        "google_place_id": "0x35637451da5bdfc9:0xbc5ed3a69ae1e4f4",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_uriedeul",
+      "name": "우리들성형외과의원",
+      "category": "성형외과",
+      "lat": 37.3437681,
+      "lng": 127.9316662,
+      "address": "강원특별자치도 원주시 단계동 882-5",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/1961367421",
+        "google_place_id": "0x356374521620d4bb:0xafc1e1b4487ea71b",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_choihc",
+      "name": "최해천성형외과",
+      "category": "성형외과",
+      "lat": 37.338435,
+      "lng": 127.9521272,
+      "address": "강원특별자치도 원주시 개운동 290-16",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/11838576",
+        "google_place_id": "0x356375a40aae7415:0x4e7b67a6e1b760e8",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_baektj",
+      "name": "백태준성형외과의원",
+      "category": "피부과·성형외과",
+      "lat": 37.3082307,
+      "lng": 127.9294889,
+      "address": "강원특별자치도 원주시 일산동 8-1",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/9818786",
+        "google_place_id": "0x35637509061730ef:0xf05424fdb6274761",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_choidi",
+      "name": "최동익성형외과의원",
+      "category": "성형외과",
+      "lat": 37.3307284,
+      "lng": 127.9488795,
+      "address": "강원특별자치도 원주시 단구동 1511-2",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/13601402",
+        "google_place_id": "0x356375b91f25d1ab:0x7fcdab403d04fb3f",
+        "naver_place_url": ""
+      }
+    },
+    {
+      "competitor_id": "comp_midream",
+      "name": "미드림의원",
+      "category": "피부과·성형외과",
+      "lat": 37.3439314,
+      "lng": 127.9298012,
+      "address": "강원특별자치도 원주시 단계동 876-4",
+      "channels": {
+        "kakao_place_url": "https://place.map.kakao.com/8439387",
+        "google_place_id": "",
         "naver_place_url": ""
       }
     }

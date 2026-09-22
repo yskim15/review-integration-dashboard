@@ -79,7 +79,8 @@ def test_load_competitors_reads_config():
     competitors = main.load_competitors()
     ids = [c["hospital_id"] for c in competitors]
     assert "comp_audrey" in ids and "comp_dodana" in ids, f"실제: {ids}"
-    assert len(competitors) == 5, f"실제: {len(competitors)}"
+    # 2026-09-22 행정동(5곳)->시 단위(22곳)로 경쟁 병원 범위 확장
+    assert len(competitors) == 22, f"실제: {len(competitors)}"
     dodana = next(c for c in competitors if c["hospital_id"] == "comp_dodana")
     assert dodana["hospital_name"] == "도다나피부과의원"
     assert dodana["channels"]["naver_place_url"] == ""
