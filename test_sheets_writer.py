@@ -1,3 +1,4 @@
+import re
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -9,6 +10,7 @@ class FakeWorksheet:
 
     def __init__(self, initial_values=None):
         self.values = [list(row) for row in (initial_values or [])]
+        self.batch_update_calls = 0
 
     def get_all_values(self):
         return self.values
@@ -17,12 +19,31 @@ class FakeWorksheet:
         self.values.append(list(row))
 
     def update(self, range_name, values):
-        # 단순화된 가짜 구현: 이 프로젝트에서는 헤더를 A1에 쓰는 용도로만 쓴다.
-        assert range_name == "A1", f"이 가짜 객체는 A1 범위만 지원함: {range_name!r}"
-        if not self.values:
-            self.values.append(list(values[0]))
-        else:
-            self.values[0] = list(values[0])
+        if range_name == "A1":
+            if not self.values:
+                self.values.append(list(values[0]))
+            else:
+                self.values[0] = list(values[0])
+            return
+        # 단일 셀 범위(예: "H2") 갱신 — update_sentiment 테스트용.
+        self._set_cell(range_name, values)
+
+    def batch_update(self, data, value_input_option=None):
+        # gspread의 batch_update: [{"range": ..., "values": [[...]]}, ...]를
+        # 한 번의 API 호출로 반영한다. 호출 횟수를 세어 "정말 한 번에 묶였는지"
+        # 테스트에서 검증할 수 있게 한다.
+        self.batch_update_calls += 1
+        for item in data:
+            self._set_cell(item["range"], item["values"])
+
+    def _set_cell(self, range_name, values):
+        match = re.match(r"^([A-Z]+)(\d+)$", range_name)
+        assert match, f"이 가짜 객체는 A1 또는 단일 셀 범위만 지원함: {range_name!r}"
+        col_letters, row_str = match.groups()
+        col_index = 0
+        for ch in col_letters:
+            col_index = col_index * 26 + (ord(ch) - ord("A") + 1)
+        self.values[int(row_str) - 1][col_index - 1] = values[0][0]
 
     def append_rows(self, rows, value_input_option=None):
         for row in rows:
@@ -123,6 +144,43 @@ def test_read_existing_reviews_returns_records():
     print("PASS: test_read_existing_reviews_returns_records")
 
 
+def test_update_sentiment_updates_only_sentiment_confirmed_method_columns():
+    ws = FakeWorksheet(initial_values=[
+        sheets_writer.HEADER,
+        ["gangnam_jstar", "네이버", "홍길동", "", "2026-08-01", "염증 때문에 병원 갔는데 친절해서 좋았어요", False, "부정", True, -4, "염증,스트레스,친절", "lexicon", "2026-09-16T00:00:00"],
+    ])
+    sheets_writer.update_sentiment(ws, 2, {"sentiment": "긍정", "confirmed": True, "method": "claude_review"})
+    assert ws.values[1] == [
+        "gangnam_jstar", "네이버", "홍길동", "", "2026-08-01", "염증 때문에 병원 갔는데 친절해서 좋았어요", False,
+        "긍정", True, -4, "염증,스트레스,친절", "claude_review", "2026-09-16T00:00:00",
+    ], f"실제: {ws.values[1]}"
+    print("PASS: test_update_sentiment_updates_only_sentiment_confirmed_method_columns")
+
+
+def test_batch_update_sentiments_updates_multiple_rows_in_a_single_api_call():
+    ws = FakeWorksheet(initial_values=[
+        sheets_writer.HEADER,
+        ["h1", "네이버", "a", "", "2026-08-01", "리뷰1", False, "부정", True, -2, "져서", "lexicon", "t"],
+        ["h1", "네이버", "b", "", "2026-08-01", "리뷰2", False, "중립", True, 0, "", "lexicon", "t"],
+    ])
+    sheets_writer.batch_update_sentiments(ws, [
+        (2, {"sentiment": "긍정", "confirmed": True, "method": "claude_review"}),
+        (3, {"sentiment": "긍정", "confirmed": True, "method": "claude_review"}),
+    ])
+    assert ws.batch_update_calls == 1, f"85행을 개별 update()로 갱신하면 Sheets API 쓰기 quota(429)를 초과한다 — 실제: {ws.batch_update_calls}회 호출"
+    assert ws.values[1][sheets_writer.HEADER.index("sentiment")] == "긍정"
+    assert ws.values[1][sheets_writer.HEADER.index("method")] == "claude_review"
+    assert ws.values[2][sheets_writer.HEADER.index("sentiment")] == "긍정"
+    print("PASS: test_batch_update_sentiments_updates_multiple_rows_in_a_single_api_call")
+
+
+def test_batch_update_sentiments_noop_when_no_updates():
+    ws = FakeWorksheet(initial_values=[sheets_writer.HEADER])
+    sheets_writer.batch_update_sentiments(ws, [])
+    assert ws.batch_update_calls == 0, "갱신할 게 없으면 API 호출 자체를 하지 말아야 함"
+    print("PASS: test_batch_update_sentiments_noop_when_no_updates")
+
+
 if __name__ == "__main__":
     test_ensure_header_writes_header_when_sheet_empty()
     test_ensure_header_writes_header_when_first_row_is_blank()
@@ -133,3 +191,6 @@ if __name__ == "__main__":
     test_append_reviews_writes_rows_and_returns_count()
     test_append_reviews_noop_when_empty_list()
     test_read_existing_reviews_returns_records()
+    test_update_sentiment_updates_only_sentiment_confirmed_method_columns()
+    test_batch_update_sentiments_updates_multiple_rows_in_a_single_api_call()
+    test_batch_update_sentiments_noop_when_no_updates()

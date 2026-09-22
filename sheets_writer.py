@@ -62,6 +62,41 @@ def append_reviews(worksheet, hospital_id, reviews_with_classification, collecte
     return len(rows)
 
 
+def _col_letter(index):
+    """0-based 컬럼 인덱스를 시트 열 문자로 변환한다 (0->A, 7->H ...)."""
+    letters = ""
+    n = index + 1
+    while n > 0:
+        n, rem = divmod(n - 1, 26)
+        letters = chr(65 + rem) + letters
+    return letters
+
+
+def update_sentiment(worksheet, row_number, classification):
+    """row_number: 1-based 시트 행 번호(헤더=1행).
+    sentiment/confirmed/method 컬럼만 갱신한다. score/matched_words는 원래
+    규칙기반 판단의 증거로 그대로 남긴다(재분류 설계문서 참고)."""
+    for field in ("sentiment", "confirmed", "method"):
+        col = _col_letter(HEADER.index(field))
+        worksheet.update(f"{col}{row_number}", [[classification[field]]])
+
+
+def batch_update_sentiments(worksheet, updates):
+    """updates: [(row_number, classification), ...]
+    모든 행을 단 한 번의 Sheets API 호출(batch_update)로 갱신한다. 행마다
+    update_sentiment()으로 개별 호출하면 행 수 x 3(컬럼)만큼 API를 호출하게 되어,
+    실제로 85행 재분류 시 'Write requests per minute' 429 quota 에러가 발생했다
+    (2026-09-22 실측)."""
+    if not updates:
+        return
+    data = []
+    for row_number, classification in updates:
+        for field in ("sentiment", "confirmed", "method"):
+            col = _col_letter(HEADER.index(field))
+            data.append({"range": f"{col}{row_number}", "values": [[classification[field]]]})
+    worksheet.batch_update(data)
+
+
 def read_existing_reviews(worksheet):
     """헤더를 키로 하는 dict 목록을 반환한다(hospital_id/channel/content 포함)."""
     return worksheet.get_all_records()
