@@ -27,6 +27,12 @@ USER_AGENT = (
 
 MAX_LOAD_MORE_CLICKS = 15
 
+# 2026-09-22 실측: 경쟁 병원이 6곳→22곳으로 늘면서 한 실행 안에서 카카오맵을
+# 22번 연속 요청했더니 전원(자사 포함) ".group_review" 대기 타임아웃으로
+# 실패했다(전날 6곳 실행은 실패 0건이었음). 공용 polite_sleep()의 2~3초보다
+# 훨씬 길게 둬서 업체 간 요청을 더 정중하게 분산시킨다.
+KAKAO_SLEEP_RANGE = (8.0, 15.0)
+
 
 def _extract_place_id(kakao_place_url):
     return kakao_place_url.rstrip("/").split("/")[-1]
@@ -118,7 +124,7 @@ def collect_full(hospital):
     """전체 리뷰 수집 (매일 정기 집계용)."""
     place_id = _extract_place_id(hospital["channels"]["kakao_place_url"])
     place_url = f"https://place.map.kakao.com/{place_id}"
-    polite_sleep()
+    polite_sleep(KAKAO_SLEEP_RANGE)
     html = _render_review_html(place_url)
     if html is None:
         return []

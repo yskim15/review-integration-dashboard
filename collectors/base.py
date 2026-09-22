@@ -13,8 +13,10 @@ import time
 RANDOM_SLEEP_RANGE = (2.0, 3.0)
 
 
-def polite_sleep():
-    time.sleep(random.uniform(*RANDOM_SLEEP_RANGE))
+def polite_sleep(sleep_range=RANDOM_SLEEP_RANGE):
+    """sleep_range를 넘기면 채널별로 더 긴(혹은 짧은) 간격을 쓸 수 있다
+    (예: collectors/kakao.py의 KAKAO_SLEEP_RANGE)."""
+    time.sleep(random.uniform(*sleep_range))
 
 
 def safe_run(hospital_id, channel, func, *args, **kwargs):

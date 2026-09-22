@@ -1,7 +1,9 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 
-from collectors.kakao import _parse_reviews, _extract_place_id
+from unittest.mock import patch
+
+from collectors.kakao import KAKAO_SLEEP_RANGE, _parse_reviews, _extract_place_id, collect_full
 
 _HTML = """
 <div class="group_review">
@@ -57,7 +59,19 @@ def test_parse_reviews_empty_when_no_cards():
     print("PASS: test_parse_reviews_empty_when_no_cards")
 
 
+def test_collect_full_sleeps_with_kakao_specific_range():
+    # 2026-09-22: 22곳 동시 수집 시 카카오맵 전원 타임아웃 실패(봇 차단 추정)
+    # 이후, 업체 간 간격을 공용 polite_sleep()보다 길게(KAKAO_SLEEP_RANGE) 둔다.
+    hospital = {"channels": {"kakao_place_url": "https://place.map.kakao.com/18731017"}}
+    with patch("collectors.kakao.polite_sleep") as mock_sleep, \
+         patch("collectors.kakao._render_review_html", return_value=None):
+        collect_full(hospital)
+    mock_sleep.assert_called_once_with(KAKAO_SLEEP_RANGE)
+    print("PASS: test_collect_full_sleeps_with_kakao_specific_range")
+
+
 if __name__ == "__main__":
     test_extract_place_id()
     test_parse_reviews_basic()
     test_parse_reviews_empty_when_no_cards()
+    test_collect_full_sleeps_with_kakao_specific_range()

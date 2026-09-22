@@ -41,8 +41,19 @@ def test_polite_sleep_within_range():
     print("PASS: test_polite_sleep_within_range")
 
 
+def test_polite_sleep_accepts_custom_range():
+    # 카카오 수집기가 채널별로 더 긴 간격을 쓸 수 있어야 한다(2026-09-22 22곳
+    # 동시 수집 시 카카오맵 전원 타임아웃 실패 이후 대응).
+    with patch("collectors.base.time.sleep") as mock_sleep:
+        polite_sleep((8.0, 12.0))
+    slept_seconds = mock_sleep.call_args[0][0]
+    assert 8.0 <= slept_seconds <= 12.0, f"실제: {slept_seconds}"
+    print("PASS: test_polite_sleep_accepts_custom_range")
+
+
 if __name__ == "__main__":
     test_safe_run_success()
     test_safe_run_failure_isolated()
     test_stagger_offset_seconds()
     test_polite_sleep_within_range()
+    test_polite_sleep_accepts_custom_range()
