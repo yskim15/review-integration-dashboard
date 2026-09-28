@@ -83,7 +83,9 @@ def test_load_competitors_reads_config():
     assert len(competitors) == 22, f"실제: {len(competitors)}"
     dodana = next(c for c in competitors if c["hospital_id"] == "comp_dodana")
     assert dodana["hospital_name"] == "도다나피부과의원"
-    assert dodana["channels"]["naver_place_url"] == ""
+    # 빈 값(미확인)이거나, find_naver_place_ids.py로 채운 플레이스 URL 형식이어야 한다
+    naver_url = dodana["channels"]["naver_place_url"]
+    assert naver_url == "" or naver_url.startswith("https://m.place.naver.com/hospital/"), f"실제: {naver_url}"
     print("PASS: test_load_competitors_reads_config")
 
 

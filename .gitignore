@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 .env
 reclassify_work/
+naver_place_lookup_report.json
+naver_place_manual.json
+config/competitors_config.backup_*.json
