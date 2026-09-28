@@ -23,6 +23,9 @@ _CONFIRM_THRESHOLD = 2
 
 _PRE_NEGATION_RE = re.compile(r"(안|못)\s*$")
 _POST_NEGATION_RE = re.compile(r"^\s*(하지|치|지)?\s*(않|안)")
+# "부담 없고", "걱정은 전혀 없었", "통증도 없이"처럼 감성 단어 뒤에 "없다"가 오면 뜻이 뒤집힌다
+# (2026-09-28, "부담 없고 괜찮네요" 긍정 후기가 "부담"(-2)만 잡혀 부정 확정되던 사례).
+_POST_ABSENCE_RE = re.compile(r"^\s*(이|가|은|는|도|이나)?\s*(전혀|하나도|별로|딱히)?\s*없")
 
 # KNU 사전에 그 자체로 실려 있지만, 실제로는 독립된 감성 단어가 아니라
 # 동사 활용형 어미 조각이라 무관한 문맥에서 오탐을 일으키는 항목들.
@@ -74,7 +77,8 @@ def _score_text(content):
         polarity = _LEXICON[word]
         pre = content[max(0, start - 6):start]
         post = content[end:end + 8]
-        negated = bool(_PRE_NEGATION_RE.search(pre)) or bool(_POST_NEGATION_RE.match(post))
+        negated = (bool(_PRE_NEGATION_RE.search(pre)) or bool(_POST_NEGATION_RE.match(post))
+                   or bool(_POST_ABSENCE_RE.match(post)))
         if negated:
             polarity = -polarity
         score += polarity

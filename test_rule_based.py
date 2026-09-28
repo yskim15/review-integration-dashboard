@@ -26,8 +26,9 @@ def test_text_positive_confirmed():
     result = classify({"rating": None, "content": "정말 친절하고 좋았어요"})
     assert result["sentiment"] == "긍정", f"실제: {result}"
     assert result["confirmed"] is True
-    assert result["score"] == 2
-    assert result["matched_words"] == ["친절"]
+    # 2026-09-28 병원 특화 사전에 "좋았"(+1) 추가로 2 -> 3
+    assert result["score"] == 3
+    assert result["matched_words"] == ["친절", "좋았"]
     print("PASS: test_text_positive_confirmed")
 
 
@@ -89,7 +90,38 @@ def test_droop_verb_ending_not_treated_as_sentiment_word():
     print("PASS: test_droop_verb_ending_not_treated_as_sentiment_word")
 
 
+def test_absence_after_negative_word_flips_to_positive():
+    # 2026-09-28 실제 오분류 유형: "부담 없고 괜찮네요" 긍정 후기가 "부담"(-2)만 잡혀
+    # 부정 확정됐었다. 부정 단어 뒤 "없다"는 뜻을 뒤집어야 한다(문장은 재구성한 예시).
+    result = classify({"rating": None, "content": "비용이 적당했고 권유도 없어서 부담 없고 괜찮았어요"})
+    assert result["sentiment"] == "긍정" and result["confirmed"] is True, f"실제: {result}"
+    # 약한 단어(통증 -1)는 뒤집혀도 +1이라 확정 기준 미만 — 부정만 아니면 된다(단정하지 않는 원칙)
+    for content in ("시술할 때 통증도 전혀 없었어요", "걱정은 하나도 없었습니다"):
+        r = classify({"rating": None, "content": content})
+        assert r["sentiment"] != "부정" and r["score"] > 0, f"{content!r} 실제: {r}"
+    print("PASS: test_absence_after_negative_word_flips_to_positive")
+
+
+def test_absence_after_positive_word_flips_to_negative():
+    result = classify({"rating": None, "content": "직원들 친절은 전혀 없었어요"})
+    assert result["sentiment"] == "부정", f"실제: {result}"
+    print("PASS: test_absence_after_positive_word_flips_to_negative")
+
+
+def test_common_positive_stems():
+    result = classify({"rating": None, "content": "가격도 적당하고 결과도 좋았습니다"})
+    assert result["sentiment"] == "긍정" and result["confirmed"] is True, f"실제: {result}"
+    assert {"적당", "좋았"} <= set(result["matched_words"]), f"실제: {result}"
+    # 기존 부정어 규칙과 함께 동작해야 한다
+    r = classify({"rating": None, "content": "결과는 안 좋았고 가격도 적당하지 않았어요"})
+    assert r["sentiment"] == "부정", f"실제: {r}"
+    print("PASS: test_common_positive_stems")
+
+
 if __name__ == "__main__":
+    test_absence_after_negative_word_flips_to_positive()
+    test_absence_after_positive_word_flips_to_negative()
+    test_common_positive_stems()
     test_rating_negative_confirmed()
     test_rating_positive_confirmed()
     test_rating_neutral_confirmed()
