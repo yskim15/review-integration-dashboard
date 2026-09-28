@@ -13,7 +13,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/489868283",
         "google_place_id": "0x3563752029cc3edb:0xe57f0d77e2fe0289",
-        "naver_place_url": "https://booking.naver.com/booking/13/bizes/1097127"
+        "naver_place_url": "https://m.place.naver.com/hospital/1770408723/review/visitor"
       }
     },
     {
@@ -39,7 +39,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/262226489",
         "google_place_id": "0x3563758ac4f80f23:0x18d044a90c353c30",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/1089376172/review/visitor"
       }
     },
     {
@@ -52,7 +52,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/1670625541",
         "google_place_id": "0x356375eedb3550a1:0xd18a0acfca4aafe9",
-        "naver_place_url": "https://booking.naver.com/booking/13/bizes/1213058"
+        "naver_place_url": "https://m.place.naver.com/hospital/1064285336/review/visitor"
       }
     },
     {
@@ -65,7 +65,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/17911852",
         "google_place_id": "0x35637449b76d7647:0x42bb4a6d92b4512",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/1918685018/review/visitor"
       }
     },
     {
@@ -78,7 +78,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/12813224",
         "google_place_id": "0x356375b9e8e72c87:0x91f71bfefffe3ec0",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/13317122/review/visitor"
       }
     },
     {
@@ -91,7 +91,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/80694422",
         "google_place_id": "0x35637500444ab893:0x1d4f70eb0f6f0307",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/2031043175/review/visitor"
       }
     },
     {
@@ -104,7 +104,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/11105311",
         "google_place_id": "0x356375007eeffca5:0xe08f8ad3d6c62e7f",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/12791769/review/visitor"
       }
     },
     {
@@ -117,7 +117,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/8204461",
         "google_place_id": "0x356375b974bb0ee5:0x6829ebf731353f9b",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/11530926/review/visitor"
       }
     },
     {
@@ -143,7 +143,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/1067082091",
         "google_place_id": "0x35637515b85520df:0x9448d99866ccba0",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/1525783837/review/visitor"
       }
     },
     {
@@ -156,7 +156,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/27308787",
         "google_place_id": "0x35637451b1a90f23:0xf1f879e873f6c2df",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/19878136/review/visitor"
       }
     },
     {
@@ -169,7 +169,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/10385545",
         "google_place_id": "0x35637508c92faadd:0x7b6449f1192b42c5",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/13242997/review/visitor"
       }
     },
     {
@@ -195,7 +195,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/328994607",
         "google_place_id": "0x356375b99bd648db:0xf41b5c81d314c0aa",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/1230381844/review/visitor"
       }
     },
     {
@@ -221,7 +221,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/191233966",
         "google_place_id": "0x35637451da5bdfc9:0xbc5ed3a69ae1e4f4",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/205391209/review/visitor"
       }
     },
     {
@@ -234,7 +234,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/1961367421",
         "google_place_id": "0x356374521620d4bb:0xafc1e1b4487ea71b",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/1512230976/review/visitor"
       }
     },
     {
@@ -247,7 +247,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/11838576",
         "google_place_id": "0x356375a40aae7415:0x4e7b67a6e1b760e8",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/11535432/review/visitor"
       }
     },
     {
@@ -260,7 +260,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/9818786",
         "google_place_id": "0x35637509061730ef:0xf05424fdb6274761",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/19493771/review/visitor"
       }
     },
     {
@@ -273,7 +273,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/13601402",
         "google_place_id": "0x356375b91f25d1ab:0x7fcdab403d04fb3f",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/35958504/review/visitor"
       }
     },
     {
@@ -286,7 +286,7 @@
       "channels": {
         "kakao_place_url": "https://place.map.kakao.com/8439387",
         "google_place_id": "",
-        "naver_place_url": ""
+        "naver_place_url": "https://m.place.naver.com/hospital/11559643/review/visitor"
       }
     }
   ]
