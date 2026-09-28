@@ -107,6 +107,28 @@ python find_naver_place_ids.py --manual naver_place_manual.json   # 형식 검�
   `collectors/naver.py`가 해당 채널을 실패로 기록하고 Actions에 경고를 띄운다.
 - 자사 고객 병원은 온보딩 시 병원에 스마트플레이스 URL을 직접 받는다.
 
+## 네이버 리뷰 보완 수집 — 크롬 확장 연동 (병행)
+
+채널별 수집 방식(2026-09-28 확정):
+- **네이버**: `main.py`(Actions) GraphQL 자동 수집을 유지하고, 차단·실패한 병원은 담당자
+  브라우저의 크롬 확장("PEI 네이버 리뷰 수집(내부용)")으로 보완한다. 확장은 사용자가 연 탭에서
+  동작하고 캡차는 사람이 푼다 — 은폐·우회 코드 없음.
+- **카카오맵**: 기존 방식 유지(`KAKAO_SLEEP_RANGE` 긴 대기로 정중하게 수집).
+- **구글맵**: 기존 Python(Playwright) 자동 수집 유지.
+
+```
+python naver_extension_bridge.py export-targets
+    → naver_extension_work/step2_targets.json (확장 batch.html에서 불러오기)
+확장으로 수집 → 네이버리뷰수집_<병원명>_<YYYYMMDD>.xlsx 다운로드
+python naver_extension_bridge.py import <다운로드 폴더>          # 미리보기
+python naver_extension_bridge.py import <다운로드 폴더> --apply  # 시트 반영
+```
+
+- `--apply`는 `GOOGLE_SHEET_ID`/`GCP_SA_KEY` 환경변수 필요(`reclassify.py`와 동일).
+- 중복 판정은 본문 공백·줄바꿈을 정규화해 비교한다(GraphQL 본문과 확장이 DOM에서 읽은
+  본문의 공백이 다를 수 있음). 확장 엑셀엔 작성자·답글 정보가 없어 빈 값으로 둔다.
+- 확장도 플레이스 URL이 있어야 수집할 수 있다 — 플레이스 ID 확보는 위 온보딩 절차를 따른다.
+
 ## 보안
 
 이 저장소(`review-integration-dashboard`)는 GitHub Pages 무료 호스팅을 위해
