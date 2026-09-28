@@ -4,4 +4,5 @@ __pycache__/
 reclassify_work/
 naver_place_lookup_report.json
 naver_place_manual.json
+naver_place_manual.html
 config/competitors_config.backup_*.json

@@ -19,12 +19,14 @@ config/competitors_config.json에서 naver_place_url이 비어 있거나 예약 
 
 자동 조회는 네이버 캡차로 막혀 있다(2026-09-28 실측). 수동 확인 경로:
     python find_naver_place_ids.py --make-manual naver_place_manual.json
-        → search_url을 열어 check_address와 같은 곳인지 확인 후 naver_place_id에 숫자/URL 붙여넣기
+        → 같은 이름의 .html 확인 페이지가 함께 생긴다. 브라우저로 열어 병원별로 확인·입력 후
+          [결과 JSON 복사] 내용으로 입력 JSON 파일을 덮어쓴다
     python find_naver_place_ids.py --manual naver_place_manual.json   # 형식 검증 후 반영(백업 생성)
 """
 
 import argparse
 import datetime
+import html
 import json
 import random
 import re
@@ -130,7 +132,8 @@ def main():
 
     if args.make_manual:
         n = make_manual_template(args.make_manual)
-        print(f"{n}곳 입력 파일 생성: {args.make_manual}")
+        print(f"{n}곳 입력 파일 생성: {args.make_manual} (브라우저 확인 페이지: "
+              f"{Path(args.make_manual).with_suffix('.html').name})")
         return 0
     if args.manual:
         return apply_manual(args.manual)
@@ -226,7 +229,40 @@ def make_manual_template(path):
     ]
     with open(path, "w", encoding="utf-8") as f:
         json.dump(rows, f, ensure_ascii=False, indent=2)
+    html_path = Path(path).with_suffix(".html")
+    with open(html_path, "w", encoding="utf-8") as f:
+        f.write(render_check_page(rows))
     return len(rows)
+
+
+def render_check_page(rows):
+    """사람이 브라우저에서 플레이스 ID를 확인·입력하는 페이지. 터미널은 인코딩된 링크를
+    잘라먹어 검색어가 깨지므로(2026-09-28 실측) 브라우저로 여는 HTML로 제공한다.
+    [결과 JSON 복사] 결과를 입력 JSON 파일에 그대로 덮어써 --manual로 반영한다."""
+    esc = html.escape
+    trs = "".join(
+        f'<tr><td>{i}</td><td><a href="{esc(r["search_url"])}" target="_blank" rel="noopener">{esc(r["name"])}</a></td>'
+        f'<td>{esc(re.sub(r"^강원특별자치도 ", "", r["check_address"]))}</td>'
+        f'<td><input data-id="{esc(r["competitor_id"])}" value="{esc(r["naver_place_id"])}" placeholder="숫자 또는 URL"></td></tr>'
+        for i, r in enumerate(rows, 1)
+    )
+    data = json.dumps(rows, ensure_ascii=False).replace("</", "<\\/")
+    return f"""<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>네이버 플레이스 확인</title>
+<style>body{{font-family:sans-serif;margin:24px;max-width:960px}}table{{border-collapse:collapse;width:100%}}
+td,th{{border:1px solid #ccc;padding:6px 8px}}input{{width:200px}}a{{font-weight:bold}}
+textarea{{width:100%;height:200px;margin-top:12px}}button{{padding:8px 16px;margin-top:12px;font-size:15px}}</style></head><body>
+<h2>경쟁 병원 네이버 플레이스 ID 확인 ({len(rows)}곳)</h2>
+<ol><li>병원 이름 클릭 → 네이버 지도가 새 탭에서 열림</li>
+<li>오른쪽 주소와 <b>같은 곳</b>을 클릭 → 주소창 <code>.../place/<b>숫자</b></code> 복사 → 칸에 붙여넣기 (다르거나 없으면 비워 둠)</li>
+<li>[결과 JSON 복사] → 입력 JSON 파일 내용을 통째로 바꿔 저장 (또는 Claude 채팅창에 붙여넣기)</li>
+<li><code>python find_naver_place_ids.py --manual &lt;입력 JSON 파일&gt;</code> 실행</li></ol>
+<table><tr><th>#</th><th>병원</th><th>확인할 주소</th><th>플레이스 ID</th></tr>{trs}</table>
+<button onclick="go()">결과 JSON 복사</button><textarea id="out" readonly></textarea>
+<script>const ROWS={data};
+function go(){{const v={{}};document.querySelectorAll('input').forEach(e=>v[e.dataset.id]=e.value.trim());
+const t=JSON.stringify(ROWS.map(r=>Object.assign({{}},r,{{naver_place_id:v[r.competitor_id]||""}})),null,2);
+const o=document.getElementById('out');o.value=t;o.select();try{{navigator.clipboard.writeText(t)}}catch(e){{}}}}</script>
+</body></html>"""
 
 
 def apply_manual(path):

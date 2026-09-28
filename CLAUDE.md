@@ -89,6 +89,24 @@ python reclassify.py --apply
 애매하되 위 세 패턴에 해당하지 않으면 `"중립"`으로 판단한다(추측으로 긍정/부정을
 단정하지 않는다 — 루트 CLAUDE.md의 "데이터 없음의 정직한 표기" 원칙과 동일선상).
 
+## 경쟁 병원 온보딩 — 네이버 플레이스 ID
+
+네이버는 스크립트 검색에 캡차를 요구해(2026-09-28 실측) 플레이스 ID 자동 조회가
+불가능하다. 우회하지 않는다. 신규 경쟁 병원을 `config/competitors_config.json`에
+추가하면(`naver_place_url`은 빈 값) 다음 순서로 채운다.
+
+```
+python find_naver_place_ids.py --make-manual naver_place_manual.json
+    → naver_place_manual.json + naver_place_manual.html(브라우저 확인 페이지) 생성
+사람이 .html을 브라우저로 열어 병원별 ID 확인·입력 → [결과 JSON 복사] → .json 덮어쓰기
+python find_naver_place_ids.py --manual naver_place_manual.json   # 형식 검증 후 반영(백업 생성)
+```
+
+- ID가 없는 동안에도 수집은 멈추지 않는다(네이버 채널만 건너뛰고 카카오·구글은 수집).
+- 예약 URL(`booking.naver.com`)·단축 URL(`naver.me`)은 플레이스 ID가 아니다.
+  `collectors/naver.py`가 해당 채널을 실패로 기록하고 Actions에 경고를 띄운다.
+- 자사 고객 병원은 온보딩 시 병원에 스마트플레이스 URL을 직접 받는다.
+
 ## 보안
 
 이 저장소(`review-integration-dashboard`)는 GitHub Pages 무료 호스팅을 위해

@@ -166,7 +166,28 @@ def _via_html_selectors(review_page_url):
     return reviews, None
 
 
+class NaverUrlFormatError(Exception):
+    """naver_place_url이 플레이스 URL이 아닐 때(예약·단축 URL) 발생한다."""
+
+
+# 예약(bizes) 번호나 단축 URL은 플레이스 businessId가 아니다. 그대로 두면 GraphQL이
+# 오류 없이 0건을 돌려줘 "수집 성공 0건"으로 방치된다(2026-09-28 오드리·리블룸 실측).
+_NON_PLACE_URL_MARKERS = ("booking.naver.com", "naver.me/")
+
+
+def _check_place_url(hospital):
+    url = hospital["channels"]["naver_place_url"]
+    if any(m in url for m in _NON_PLACE_URL_MARKERS):
+        msg = (f"{hospital.get('hospital_id')}: naver_place_url이 플레이스 URL이 아닙니다({url}). "
+               "m.place.naver.com/hospital/<플레이스ID>/review/visitor 형식으로 바꿔야 합니다 "
+               "(find_naver_place_ids.py --make-manual 참고).")
+        # GitHub Actions 실행 화면에 경고로 보이게 한다
+        print(f"::warning title=네이버 URL 형식 오류::{msg}")
+        raise NaverUrlFormatError(msg)
+
+
 def collect_full(hospital):
+    _check_place_url(hospital)
     place_id = _extract_place_id(hospital["channels"]["naver_place_url"])
     if not place_id:
         raise NaverBlockedError(

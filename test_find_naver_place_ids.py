@@ -1,6 +1,6 @@
 """find_naver_place_ids.py 매칭 로직 테스트 (네트워크 호출 없음, 가상 병원명 사용)."""
 
-from find_naver_place_ids import jibun_key, names_match, needs_lookup, parse_place_id, pick_match
+from find_naver_place_ids import jibun_key, names_match, needs_lookup, parse_place_id, pick_match, render_check_page
 
 COMP = {"name": "가나다피부과의원", "address": "강원특별자치도 원주시 가상동 100-2"}
 
@@ -64,7 +64,19 @@ def test_parse_place_id():
     print("PASS: test_parse_place_id")
 
 
+def test_render_check_page():
+    rows = [{"competitor_id": "comp_x", "name": "가나<다>의원", "check_address": "강원특별자치도 원주시 가상동 1-1",
+             "search_url": "https://map.naver.com/p/search/%EA%B0%80", "naver_place_id": "777"}]
+    page = render_check_page(rows)
+    assert "가나&lt;다&gt;의원" in page and "<다>" not in page.split("const ROWS=")[0]
+    assert 'href="https://map.naver.com/p/search/%EA%B0%80"' in page
+    assert 'data-id="comp_x" value="777"' in page
+    assert "원주시 가상동 1-1" in page and "강원특별자치도" not in page.split("const ROWS=")[0]
+    print("PASS: test_render_check_page")
+
+
 if __name__ == "__main__":
+    test_render_check_page()
     test_parse_place_id()
     test_jibun_key()
     test_needs_lookup()

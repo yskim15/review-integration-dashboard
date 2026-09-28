@@ -2,7 +2,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 
 from unittest.mock import patch, MagicMock
-from collectors.naver import _extract_place_id, _via_graphql, collect_full, NaverBlockedError
+from collectors.naver import _extract_place_id, _via_graphql, collect_full, NaverBlockedError, NaverUrlFormatError
 
 
 def test_extract_place_id_hospital_segment():
@@ -85,7 +85,23 @@ def test_collect_full_success_via_graphql():
     print("PASS: test_collect_full_success_via_graphql")
 
 
+def test_collect_full_rejects_booking_and_short_urls():
+    # 예약 URL의 bizes 번호로 GraphQL을 부르면 오류 없이 0건이 나와 방치된다 — 호출 전에 막아야 함
+    for url in ("https://booking.naver.com/booking/13/bizes/1234", "https://naver.me/abcd"):
+        hospital = {"hospital_id": "comp_test", "channels": {"naver_place_url": url}}
+        with patch("collectors.naver.requests.post") as mock_post:
+            try:
+                collect_full(hospital)
+                raised = False
+            except NaverUrlFormatError:
+                raised = True
+        assert raised, f"{url}에서 NaverUrlFormatError가 발생해야 함"
+        mock_post.assert_not_called()
+    print("PASS: test_collect_full_rejects_booking_and_short_urls")
+
+
 if __name__ == "__main__":
+    test_collect_full_rejects_booking_and_short_urls()
     test_extract_place_id_hospital_segment()
     test_extract_place_id_no_digits()
     test_via_graphql_success()
