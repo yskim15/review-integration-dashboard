@@ -58,7 +58,8 @@ def export_for_claude(candidates, work_dir):
 def apply_results(worksheet, existing_reviews, work_dir):
     """[재분류결과].json을 읽어 시트에 반영한다. 실제로 바뀐 행 수를 반환한다.
 
-    (channel, content)로 existing_reviews에서 실제 시트 행을 찾는다. 그 사이
+    (hospital_id, channel, content)가 같고 method=="lexicon"인 행을 시트 순서대로
+    하나씩 배정해 existing_reviews에서 실제 시트 행을 찾는다. 그 사이
     시트가 바뀌어 못 찾으면 그 건은 건너뛰고 경고만 출력, 나머지는 계속 진행한다."""
     work_dir = Path(work_dir)
     request_path = work_dir / REQUEST_FILENAME
@@ -73,17 +74,26 @@ def apply_results(worksheet, existing_reviews, work_dir):
 
     row_updates = []
     log_entries = []
-    for result in results:
+    claimed_indexes = set()
+    for result in sorted(results, key=lambda r: r["id"]):
         candidate = candidates_by_id.get(result["id"])
         if candidate is None:
             print(f"경고: 결과 id={result['id']}에 해당하는 요청 후보를 찾을 수 없어 건너뜁니다.")
             continue
 
+        # 본문이 같은 짧은 리뷰("굿", "좋아요" 등)가 여러 행일 수 있어, 아직 lexicon이고
+        # 이번 실행에서 쓰지 않은 행만 매칭한다 (2026-09-28 실측: 전부 첫 행에 반영되던 버그).
         row_number = None
         for index, review in enumerate(existing_reviews):
-            if review.get("channel") == candidate["channel"] and review.get("content") == candidate["content"]:
-                row_number = index + 2  # 헤더가 1행이므로 실제 데이터 행은 +2
-                break
+            if (index in claimed_indexes
+                    or review.get("method") != "lexicon"
+                    or review.get("hospital_id") != candidate["hospital_id"]
+                    or review.get("channel") != candidate["channel"]
+                    or review.get("content") != candidate["content"]):
+                continue
+            claimed_indexes.add(index)
+            row_number = index + 2  # 헤더가 1행이므로 실제 데이터 행은 +2
+            break
         if row_number is None:
             print(f"경고: channel={candidate['channel']!r} content={str(candidate['content'])[:20]!r}... 에 해당하는 "
                   f"시트 행을 찾을 수 없어 건너뜁니다 (그 사이 시트가 바뀌었을 수 있음).")

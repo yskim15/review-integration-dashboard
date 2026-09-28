@@ -140,6 +140,78 @@ def test_apply_results_skips_when_row_not_found_in_existing_reviews():
         shutil.rmtree(work_dir)
 
 
+def test_apply_results_maps_duplicate_contents_to_distinct_lexicon_rows():
+    # 2026-09-28 실측 버그: "굿"처럼 본문이 같은 짧은 리뷰가 여러 행이면 전부 첫 행(이미
+    # claude_review인 행)에 반영되고 나머지 lexicon 행은 그대로 남았다.
+    work_dir = tempfile.mkdtemp()
+    try:
+        review = {"channel": "네이버", "author": "홍길동", "rating": None, "date": "2026-08-01",
+                  "content": "굿", "has_reply": False}
+        reviewed = {"sentiment": "긍정", "confirmed": True, "score": 0, "matched_words": [], "method": "claude_review"}
+        lexicon = {"sentiment": "중립", "confirmed": False, "score": 0, "matched_words": [], "method": "lexicon"}
+        rows = [
+            sheets_writer.review_to_row("gangnam_jstar", review, reviewed, "2026-09-16T00:00:00"),
+            sheets_writer.review_to_row("gangnam_jstar", review, lexicon, "2026-09-16T00:00:00"),
+            sheets_writer.review_to_row("gangnam_jstar", review, lexicon, "2026-09-16T00:00:00"),
+        ]
+        ws = FakeWorksheet(initial_values=[sheets_writer.HEADER] + rows)
+        existing = [
+            _row(content="굿", sentiment="긍정", method="claude_review", matched_words=""),
+            _row(content="굿", sentiment="중립", method="lexicon", matched_words=""),
+            _row(content="굿", sentiment="중립", method="lexicon", matched_words=""),
+        ]
+        reclassify.export_for_claude(reclassify.find_candidates(existing), work_dir)
+        result_payload = {"reviewed_at": "2026-09-29T10:00:00+09:00", "results": [
+            {"id": 0, "sentiment": "긍정", "confirmed": True, "note": "짧은 칭찬"},
+            {"id": 1, "sentiment": "긍정", "confirmed": True, "note": "짧은 칭찬"},
+        ]}
+        with open(os.path.join(work_dir, reclassify.RESULT_FILENAME), "w", encoding="utf-8") as f:
+            json.dump(result_payload, f, ensure_ascii=False)
+
+        updated = reclassify.apply_results(ws, existing, work_dir)
+
+        method_col = sheets_writer.HEADER.index("method")
+        sentiment_col = sheets_writer.HEADER.index("sentiment")
+        assert updated == 2, f"실제: {updated}"
+        assert [ws.values[i][method_col] for i in (1, 2, 3)] == ["claude_review"] * 3, f"실제: {ws.values}"
+        assert [ws.values[i][sentiment_col] for i in (2, 3)] == ["긍정", "긍정"]
+        print("PASS: test_apply_results_maps_duplicate_contents_to_distinct_lexicon_rows")
+    finally:
+        shutil.rmtree(work_dir)
+
+
+def test_apply_results_does_not_match_other_hospital_with_same_content():
+    work_dir = tempfile.mkdtemp()
+    try:
+        existing = [
+            _row(hospital_id="comp_other", content="좋아요", sentiment="중립", method="lexicon", matched_words=""),
+            _row(hospital_id="gangnam_jstar", content="좋아요", sentiment="중립", method="lexicon", matched_words=""),
+        ]
+        candidates = reclassify.find_candidates(existing)
+        # 요청에는 gangnam_jstar 후보만 남긴다
+        reclassify.export_for_claude([candidates[1]], work_dir)
+        result_payload = {"reviewed_at": "2026-09-29T10:00:00+09:00",
+                          "results": [{"id": 1, "sentiment": "긍정", "confirmed": True, "note": ""}]}
+        with open(os.path.join(work_dir, reclassify.RESULT_FILENAME), "w", encoding="utf-8") as f:
+            json.dump(result_payload, f, ensure_ascii=False)
+
+        review = {"channel": "네이버", "author": "홍길동", "rating": None, "date": "2026-08-01",
+                  "content": "좋아요", "has_reply": False}
+        lexicon = {"sentiment": "중립", "confirmed": False, "score": 0, "matched_words": [], "method": "lexicon"}
+        ws = FakeWorksheet(initial_values=[sheets_writer.HEADER,
+                                           sheets_writer.review_to_row("comp_other", review, lexicon, "t"),
+                                           sheets_writer.review_to_row("gangnam_jstar", review, lexicon, "t")])
+
+        reclassify.apply_results(ws, existing, work_dir)
+
+        method_col = sheets_writer.HEADER.index("method")
+        assert ws.values[1][method_col] == "lexicon", f"다른 병원 행이 바뀌면 안 됨: {ws.values[1]}"
+        assert ws.values[2][method_col] == "claude_review"
+        print("PASS: test_apply_results_does_not_match_other_hospital_with_same_content")
+    finally:
+        shutil.rmtree(work_dir)
+
+
 def test_apply_results_raises_when_request_file_missing():
     work_dir = tempfile.mkdtemp()
     try:
@@ -162,4 +234,6 @@ if __name__ == "__main__":
     test_export_for_claude_returns_none_and_writes_no_file_when_no_candidates()
     test_apply_results_updates_matching_row_and_logs()
     test_apply_results_skips_when_row_not_found_in_existing_reviews()
+    test_apply_results_maps_duplicate_contents_to_distinct_lexicon_rows()
+    test_apply_results_does_not_match_other_hospital_with_same_content()
     test_apply_results_raises_when_request_file_missing()
