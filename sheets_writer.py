@@ -10,6 +10,7 @@ import json
 HEADER = [
     "hospital_id", "channel", "author", "rating", "date", "content", "has_reply",
     "sentiment", "confirmed", "score", "matched_words", "method", "collected_at",
+    "key_points",  # 부정 리뷰의 주요 불만 포인트(Claude 재분류 단계에서 기록, 2026-09-29 추가)
 ]
 
 
@@ -29,8 +30,18 @@ def ensure_header(worksheet):
     if not values or _row_is_blank(values[0]):
         worksheet.update("A1", [HEADER])
         return
-    if values[0] != HEADER:
-        raise ValueError(f"시트 헤더가 예상과 다릅니다: {values[0]}")
+    current = list(values[0])
+    if current == HEADER:
+        return
+    # 뒤에 컬럼을 새로 붙인 경우(예: key_points): 앞부분이 정확히 같을 때만 빠진 헤더를
+    # 채운다 — 코드 배포와 시트 헤더 변경의 순서를 맞추지 않아도 되게 한다.
+    if len(current) < len(HEADER) and current == HEADER[:len(current)]:
+        worksheet.batch_update([
+            {"range": f"{_col_letter(i)}1", "values": [[HEADER[i]]]}
+            for i in range(len(current), len(HEADER))
+        ])
+        return
+    raise ValueError(f"시트 헤더가 예상과 다릅니다: {values[0]}")
 
 
 def review_to_row(hospital_id, review, classification, collected_at):
@@ -51,6 +62,7 @@ def review_to_row(hospital_id, review, classification, collected_at):
         ",".join(classification.get("matched_words") or []),
         classification["method"],
         collected_at,
+        "",  # key_points — 재분류 단계에서 채운다
     ]
 
 
@@ -88,14 +100,21 @@ def batch_update_sentiments(worksheet, updates):
     update_sentiment()으로 개별 호출하면 행 수 x 3(컬럼)만큼 API를 호출하게 되어,
     실제로 85행 재분류 시 'Write requests per minute' 429 quota 에러가 발생했다
     (2026-09-22 실측)."""
-    if not updates:
-        return
-    data = []
-    for row_number, classification in updates:
-        for field in ("sentiment", "confirmed", "method"):
-            col = _col_letter(HEADER.index(field))
-            data.append({"range": f"{col}{row_number}", "values": [[classification[field]]]})
-    worksheet.batch_update(data)
+    batch_update_fields(worksheet, [
+        (row_number, {field: classification[field] for field in ("sentiment", "confirmed", "method")})
+        for row_number, classification in updates
+    ])
+
+
+def batch_update_fields(worksheet, updates):
+    """updates: [(row_number, {field: value, ...}), ...] — 모든 셀을 batch_update 한 번으로 쓴다."""
+    data = [
+        {"range": f"{_col_letter(HEADER.index(field))}{row_number}", "values": [[value]]}
+        for row_number, fields in updates
+        for field, value in fields.items()
+    ]
+    if data:
+        worksheet.batch_update(data)
 
 
 def read_existing_reviews(worksheet):

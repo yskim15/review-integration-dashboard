@@ -43,7 +43,10 @@ class FakeWorksheet:
         col_index = 0
         for ch in col_letters:
             col_index = col_index * 26 + (ord(ch) - ord("A") + 1)
-        self.values[int(row_str) - 1][col_index - 1] = values[0][0]
+        row = self.values[int(row_str) - 1]
+        while len(row) < col_index:  # 실제 시트처럼 뒤쪽 빈 칸에도 쓸 수 있게 늘린다
+            row.append("")
+        row[col_index - 1] = values[0][0]
 
     def append_rows(self, rows, value_input_option=None):
         for row in rows:
@@ -97,7 +100,7 @@ def test_review_to_row():
     row = sheets_writer.review_to_row("gangnam_jstar", review, classification, "2026-09-16T00:00:00")
     assert row == [
         "gangnam_jstar", "네이버", "홍길동", "", "2026-08-01", "친절하고 좋았어요", False,
-        "긍정", True, 2, "친절", "lexicon", "2026-09-16T00:00:00",
+        "긍정", True, 2, "친절", "lexicon", "2026-09-16T00:00:00", "",
     ], f"실제: {row}"
     print("PASS: test_review_to_row")
 
@@ -108,7 +111,7 @@ def test_review_to_row_with_rating_and_no_matched_words():
     row = sheets_writer.review_to_row("gangnam_jstar", review, classification, "2026-09-16T00:00:00")
     assert row == [
         "gangnam_jstar", "카카오맵", "이영희", 1, "2026.07.15.", "별로였어요", True,
-        "부정", True, "", "", "rating", "2026-09-16T00:00:00",
+        "부정", True, "", "", "rating", "2026-09-16T00:00:00", "",
     ], f"실제: {row}"
     print("PASS: test_review_to_row_with_rating_and_no_matched_words")
 
@@ -191,6 +194,37 @@ def test_review_to_row_has_reply_none_is_blank():
     print("PASS: test_review_to_row_has_reply_none_is_blank")
 
 
+
+def test_ensure_header_extends_missing_trailing_columns():
+    # 구버전 시트(key_points 컬럼 추가 전) — 앞부분이 정확히 같으면 빠진 뒤 컬럼만 붙인다
+    ws = FakeWorksheet(initial_values=[sheets_writer.HEADER[:-1], ["h_a"] + [""] * 12])
+    sheets_writer.ensure_header(ws)
+    assert ws.values[0] == sheets_writer.HEADER, f"실제: {ws.values[0]}"
+    assert ws.batch_update_calls == 1
+    assert len(ws.values) == 2
+    print("PASS: test_ensure_header_extends_missing_trailing_columns")
+
+
+def test_batch_update_fields_writes_arbitrary_columns_in_one_call():
+    width = len(sheets_writer.HEADER)
+    ws = FakeWorksheet(initial_values=[sheets_writer.HEADER, ["a"] * width, ["b"] * width])
+    sheets_writer.batch_update_fields(ws, [(2, {"key_points": "주차,가격"}), (3, {"sentiment": "부정", "key_points": "-"})])
+    kp = sheets_writer.HEADER.index("key_points")
+    st = sheets_writer.HEADER.index("sentiment")
+    assert ws.batch_update_calls == 1
+    assert ws.values[1][kp] == "주차,가격" and ws.values[1][st] == "a"
+    assert ws.values[2][kp] == "-" and ws.values[2][st] == "부정"
+    print("PASS: test_batch_update_fields_writes_arbitrary_columns_in_one_call")
+
+
+def test_review_to_row_key_points_blank():
+    classification = {"sentiment": "부정", "confirmed": True, "score": None, "matched_words": [], "method": "rating"}
+    row = sheets_writer.review_to_row("h_a", {"channel": "구글", "author": "", "rating": 1, "date": "", "content": "별로"}, classification, "t")
+    assert len(row) == len(sheets_writer.HEADER)
+    assert row[sheets_writer.HEADER.index("key_points")] == ""
+    print("PASS: test_review_to_row_key_points_blank")
+
+
 if __name__ == "__main__":
     test_ensure_header_writes_header_when_sheet_empty()
     test_ensure_header_writes_header_when_first_row_is_blank()
@@ -205,3 +239,6 @@ if __name__ == "__main__":
     test_batch_update_sentiments_updates_multiple_rows_in_a_single_api_call()
     test_batch_update_sentiments_noop_when_no_updates()
     test_review_to_row_has_reply_none_is_blank()
+    test_ensure_header_extends_missing_trailing_columns()
+    test_batch_update_fields_writes_arbitrary_columns_in_one_call()
+    test_review_to_row_key_points_blank()
