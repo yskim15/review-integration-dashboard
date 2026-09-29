@@ -333,7 +333,7 @@
             <ul class="kw-list" id="kwNegative"></ul>
           </div>
         </div>
-        <div class="card-sub" style="margin-top:10px;">키워드는 네이버 리뷰(별점 없음)의 규칙기반 분류 과정에서 매칭된 단어를 집계한 것입니다. 카카오·구글은 별점으로 즉시 판정되어 매칭 단어가 없습니다.</div>
+        <div class="card-sub" style="margin-top:10px;">긍정 키워드는 네이버 리뷰의 규칙기반 분류에서 매칭된 단어, 부정 키워드는 모든 채널(네이버·카카오·구글)의 부정 리뷰에서 주요 불만 포인트를 정리해 집계한 것입니다.</div>
       </div>
 
       <div class="section" id="section-map">
@@ -513,6 +513,8 @@
     var rating = raw.rating && raw.rating.trim() !== "" ? parseInt(raw.rating, 10) : null;
     var date = normalizeDate(channel, raw.date, raw.collected_at);
     var keywords = raw.matched_words ? raw.matched_words.split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [];
+    // 부정 리뷰의 주요 불만 포인트(Claude 재분류 단계에서 기록). "-"는 "구체적 포인트 없음" 표시라 집계하지 않는다.
+    var keyPoints = raw.key_points ? raw.key_points.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return s && s !== "-"; }) : [];
     return {
       hospital_id: raw.hospital_id,
       channel: channel,
@@ -522,6 +524,7 @@
       confirmed: (raw.confirmed || "").trim().toUpperCase() === "TRUE",
       author: raw.author || "익명",
       keywords: keywords,
+      keyPoints: keyPoints,
       content: raw.content || "",
       collected_at: raw.collected_at,
     };
@@ -793,8 +796,8 @@
   }
 
   // ---------------------------------------------------------------
-  // Positive / negative keyword TOP-5 (matched_words 집계 — 네이버 규칙기반
-  // 분류에서만 채워진다. 카카오/구글은 별점 즉시판정이라 matched_words가 없다)
+  // Positive / negative keyword TOP-5. 긍정은 matched_words(네이버 규칙기반 분류의
+  // 매칭 단어), 부정은 key_points(모든 채널의 부정 리뷰에서 Claude가 정리한 주요 불만 포인트).
   // ---------------------------------------------------------------
   function renderKeywordLists() {
     var list = rangeReviews();
@@ -803,7 +806,7 @@
       list.forEach(function (r) {
         if (kind === "pos" && r.sentiment !== "positive") return;
         if (kind === "neg" && r.sentiment !== "negative") return;
-        r.keywords.forEach(function (k) { freq[k] = (freq[k] || 0) + 1; });
+        (kind === "neg" ? r.keyPoints : r.keywords).forEach(function (k) { freq[k] = (freq[k] || 0) + 1; });
       });
       return Object.keys(freq).map(function (k) { return { kw: k, n: freq[k] }; })
         .sort(function (a, b) { return b.n - a.n; }).slice(0, 5);
@@ -950,6 +953,8 @@
   function reviewItemHtml(r) {
     var isNeg = r.sentiment === "negative" || (r.rating != null && r.rating <= 2);
     var sentLabel = { positive: "긍정", neutral: "중립", negative: "부정" }[r.sentiment] || "중립";
+    // 부정 리뷰는 주요 불만 포인트를, 그 외는 규칙기반 매칭 단어를 태그로 보여준다
+    var tags = r.sentiment === "negative" ? r.keyPoints : r.keywords;
     return '<div class="review-item' + (isNeg ? " is-negative" : "") + '">' +
       '<div class="r-top">' +
         '<span class="chip" style="background:' + css(PLATFORM_VAR[r.channel]) + '">' + PLATFORM_LABEL[r.channel] + '</span>' +
@@ -960,7 +965,7 @@
         '<span class="r-sent ' + r.sentiment + '">' + sentLabel + '</span>' +
       '</div>' +
       '<p>' + escapeHtml(r.content) + '</p>' +
-      (r.keywords.length ? '<div class="r-kw">' + r.keywords.map(function (k) { return "<span>#" + escapeHtml(k) + "</span>"; }).join("") + '</div>' : "") +
+      (tags.length ? '<div class="r-kw">' + tags.map(function (k) { return "<span>#" + escapeHtml(k) + "</span>"; }).join("") + '</div>' : "") +
     '</div>';
   }
 
@@ -1002,7 +1007,7 @@
 
   function openKeywordModal(keyword, kind) {
     var sentimentKey = kind === "pos" ? "positive" : "negative";
-    var list = rangeReviews().filter(function (r) { return r.sentiment === sentimentKey && r.keywords.indexOf(keyword) !== -1; });
+    var list = rangeReviews().filter(function (r) { return r.sentiment === sentimentKey && (kind === "pos" ? r.keywords : r.keyPoints).indexOf(keyword) !== -1; });
     openModal("#" + keyword + " 포함 " + (kind === "pos" ? "긍정" : "부정") + " 리뷰 (" + rangeLabel() + ")", list);
   }
 

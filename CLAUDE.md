@@ -11,8 +11,9 @@
    `review_ingest.ingest` 공통 함수로, 크롬 확장 브리지와 같은 경로를 쓴다(2026-09-29).
 2. **`reclassify.py`** — Claude Code 세션이 켜져 있을 때만 도는 검수(재분류)
    파이프라인. `method=="lexicon"`인 시트 행(규칙기반 감성분류)을 Claude가 다시
-   판단해 `sentiment`/`confirmed`/`method` 컬럼만 갱신한다. 아래는 이 파이프라인
-   전용 절차다.
+   판단해 `sentiment`/`confirmed`/`method` 컬럼을 갱신하고, 부정 리뷰(별점 판정 포함)에는
+   주요 불만 포인트를 `key_points` 컬럼에 적는다(대시보드 부정 키워드 TOP 5의 원천,
+   2026-09-29). 아래는 이 파이프라인 전용 절차다.
 
 ## `/loop` 주기마다 수행할 절차
 
@@ -35,6 +36,7 @@ python reclassify.py --apply
 ```json
 {
   "generated_at": "2026-09-21T10:00:00+09:00",
+  "existing_key_points": {"상담 태도": 5, "주차": 3},
   "candidates": [
     {
       "id": 0,
@@ -43,7 +45,8 @@ python reclassify.py --apply
       "content": "피부에 염증성 트러블 올라올 때마다...",
       "current_sentiment": "부정",
       "current_score": -4,
-      "current_matched_words": ["염증", "염증", "스트레스", "친절"]
+      "current_matched_words": ["염증", "염증", "스트레스", "친절"],
+      "tasks": ["sentiment", "key_points"]
     }
   ]
 }
@@ -60,6 +63,11 @@ python reclassify.py --apply
       "sentiment": "긍정",
       "confirmed": true,
       "note": "염증/스트레스는 내원 사유 설명이며 전체 흐름은 재방문 의사로 끝남"
+    },
+    {
+      "id": 1,
+      "key_points": ["주차"],
+      "note": "건물 주차장 입구를 막은 데 대한 불만"
     }
   ]
 }
@@ -70,6 +78,10 @@ python reclassify.py --apply
 - `sentiment`: `"긍정"|"중립"|"부정"` 중 하나.
 - `confirmed`: 항상 `true`로 쓴다. 애매하면 `"중립"`으로 판단하고 `confirmed=true`
   — 이 단계는 사람 대신 최종 판단을 내리는 단계이므로 "판단 보류" 상태를 두지 않는다.
+- `tasks`: 후보마다 할 일. `["sentiment", "key_points"]`(규칙기반 행 — 감성 판정, 결과가
+  부정이면 주요 포인트도) 또는 `["key_points"]`(이미 부정으로 확정된 행 — 감성은 쓰지 않고
+  주요 포인트만). `key_points`만인 후보에는 `sentiment`/`confirmed`를 쓰지 않는다.
+- `key_points`: 최종 판단이 부정일 때만 쓴다. 아래 "주요 포인트 작성 규칙"을 따른다.
 - `note`: 로그에만 남고 시트에는 안 쓴다. 판단 근거를 반드시 적는다.
 - `results`에 없는 `id`(판단을 건너뛴 후보)는 다음 주기에 다시 후보로 나온다.
 
@@ -89,6 +101,17 @@ python reclassify.py --apply
 
 애매하되 위 세 패턴에 해당하지 않으면 `"중립"`으로 판단한다(추측으로 긍정/부정을
 단정하지 않는다 — 루트 CLAUDE.md의 "데이터 없음의 정직한 표기" 원칙과 동일선상).
+
+## 주요 포인트 작성 규칙 (`key_points`)
+
+- 그 부정 리뷰에서 **가장 주요한 불만 포인트** 1~2개, 각 2~8자 정도의 명사구. 가장 강하게
+  말한 것부터 쓴다(예: "주차", "상담 태도", "시술 효과", "가격", "대기 시간", "예약 응대").
+- `existing_key_points`에 같은 뜻의 표현이 있으면 그 표현을 그대로 쓴다("주차"와 "주차 문제"를
+  따로 만들지 않는다 — TOP 5 집계가 쪼개진다).
+- 병원이 개선에 쓸 수 있게 대상이 드러나게 쓴다("불친절"보다 "상담 태도"/"접수 응대"). 본문이
+  그 이상을 말하지 않으면 "불친절"도 된다.
+- 본문에 없는 내용을 추측하지 않는다. 구체적 포인트를 찾을 수 없으면 `["-"]`(다시 후보로 나오지
+  않고, 대시보드는 집계하지 않는다).
 
 ## 경쟁 병원 온보딩 — 네이버 플레이스 ID
 
