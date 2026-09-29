@@ -11,12 +11,13 @@ from test_sheets_writer import FakeWorksheet
 import sheets_writer
 
 
-def _row(hospital_id="gangnam_jstar", channel="네이버", content="좋아요", sentiment="부정", confirmed=True, score=-4, matched_words="염증,스트레스", method="lexicon"):
+def _row(hospital_id="gangnam_jstar", channel="네이버", content="좋아요", sentiment="부정", confirmed=True, score=-4, matched_words="염증,스트레스", method="lexicon", key_points=""):
     return {
         "hospital_id": hospital_id, "channel": channel, "author": "홍길동", "rating": "",
         "date": "2026-08-01", "content": content, "has_reply": False,
         "sentiment": sentiment, "confirmed": confirmed, "score": score,
         "matched_words": matched_words, "method": method, "collected_at": "2026-09-16T00:00:00",
+        "key_points": key_points,
     }
 
 
@@ -26,9 +27,11 @@ def test_find_candidates_filters_lexicon_only():
         _row(channel="카카오맵", content="별로예요", method="rating", matched_words=""),
     ]
     candidates = reclassify.find_candidates(existing)
-    assert len(candidates) == 1, f"실제: {candidates}"
-    assert candidates[0]["channel"] == "네이버"
+    assert len(candidates) == 2, f"실제: {candidates}"
+    assert candidates[0]["channel"] == "네이버" and candidates[0]["tasks"] == ["sentiment", "key_points"]
     assert candidates[0]["id"] == 0
+    # 별점 판정 행은 감성은 건드리지 않고 주요 포인트만 (spec 3.2)
+    assert candidates[1]["channel"] == "카카오맵" and candidates[1]["tasks"] == ["key_points"]
     print("PASS: test_find_candidates_filters_lexicon_only")
 
 
@@ -226,6 +229,97 @@ def test_apply_results_raises_when_request_file_missing():
         shutil.rmtree(work_dir)
 
 
+
+def _sheet_row(content, sentiment, method, key_points="", hospital_id="h_a", channel="구글"):
+    review = {"channel": channel, "author": "", "rating": 1 if method == "rating" else None, "date": "",
+              "content": content, "has_reply": False}
+    row = sheets_writer.review_to_row(hospital_id, review, {"sentiment": sentiment, "confirmed": True, "score": None,
+                                                            "matched_words": [], "method": method}, "2026-09-16T00:00:00")
+    row[sheets_writer.HEADER.index("key_points")] = key_points
+    return row
+
+
+def _run_apply(sheet_rows, existing, results):
+    work_dir = tempfile.mkdtemp()
+    try:
+        reclassify.export_for_claude(reclassify.find_candidates(existing), work_dir)
+        with open(os.path.join(work_dir, reclassify.RESULT_FILENAME), "w", encoding="utf-8") as f:
+            json.dump({"reviewed_at": "2026-09-29T10:00:00+09:00", "results": results}, f, ensure_ascii=False)
+        ws = FakeWorksheet(initial_values=[sheets_writer.HEADER] + sheet_rows)
+        updated = reclassify.apply_results(ws, existing, work_dir)
+        return ws, updated
+    finally:
+        shutil.rmtree(work_dir)
+
+
+def test_find_candidates_adds_key_point_task_for_negative_rows():
+    existing = [
+        _row(channel="구글", content="주차장 입구를 막아요", sentiment="부정", method="rating", matched_words=""),
+        _row(content="상담이 성의 없어요", sentiment="부정", method="claude_review"),
+        _row(content="좋아요", sentiment="긍정", method="lexicon"),
+    ]
+    candidates = reclassify.find_candidates(existing)
+    assert [c["tasks"] for c in candidates] == [["key_points"], ["key_points"], ["sentiment", "key_points"]], f"실제: {candidates}"
+    print("PASS: test_find_candidates_adds_key_point_task_for_negative_rows")
+
+
+def test_find_candidates_skips_rows_with_key_points():
+    existing = [
+        _row(content="주차가 불편", sentiment="부정", method="rating", key_points="주차"),
+        _row(content="별로", sentiment="부정", method="claude_review", key_points="-"),
+        _row(content="", sentiment="부정", method="rating"),
+        _row(content="그냥 그래요", sentiment="중립", method="claude_review"),
+    ]
+    assert reclassify.find_candidates(existing) == []
+    print("PASS: test_find_candidates_skips_rows_with_key_points")
+
+
+def test_export_includes_existing_key_points():
+    work_dir = tempfile.mkdtemp()
+    try:
+        existing = [_row(key_points="주차,가격", method="rating"), _row(key_points="주차", method="rating"),
+                    _row(key_points="-", method="rating"), _row(content="새 불만", method="rating")]
+        path = reclassify.export_for_claude(reclassify.find_candidates(existing), work_dir,
+                                            reclassify.count_key_points(existing))
+        payload = json.loads(open(path, encoding="utf-8").read())
+        assert payload["existing_key_points"] == {"주차": 2, "가격": 1}, f"실제: {payload['existing_key_points']}"
+        print("PASS: test_export_includes_existing_key_points")
+    finally:
+        shutil.rmtree(work_dir)
+
+
+def test_apply_results_key_points_only_keeps_sentiment():
+    existing = [_row(channel="구글", content="주차장 입구를 막아요", sentiment="부정", method="rating", matched_words="")]
+    ws, updated = _run_apply([_sheet_row("주차장 입구를 막아요", "부정", "rating")], existing,
+                             [{"id": 0, "key_points": ["주차"], "note": "주차 불편"}])
+    h = sheets_writer.HEADER
+    assert updated == 1
+    assert ws.batch_update_calls == 1
+    assert ws.values[1][h.index("key_points")] == "주차"
+    assert ws.values[1][h.index("method")] == "rating" and ws.values[1][h.index("sentiment")] == "부정"
+    print("PASS: test_apply_results_key_points_only_keeps_sentiment")
+
+
+def test_apply_results_sentiment_and_key_points():
+    existing = [_row(channel="구글", content="상담이 성의 없어요", sentiment="중립", method="lexicon", matched_words="")]
+    ws, updated = _run_apply([_sheet_row("상담이 성의 없어요", "중립", "lexicon")], existing,
+                             [{"id": 0, "sentiment": "부정", "confirmed": True, "key_points": ["상담 태도"], "note": ""}])
+    h = sheets_writer.HEADER
+    assert updated == 1 and ws.batch_update_calls == 1
+    assert [ws.values[1][h.index(f)] for f in ("sentiment", "method", "key_points")] == ["부정", "claude_review", "상담 태도"]
+    print("PASS: test_apply_results_sentiment_and_key_points")
+
+
+def test_apply_results_key_points_distinct_rows():
+    existing = [_row(channel="구글", content="별로", sentiment="부정", method="rating", matched_words=""),
+                _row(channel="구글", content="별로", sentiment="부정", method="rating", matched_words="")]
+    ws, updated = _run_apply([_sheet_row("별로", "부정", "rating"), _sheet_row("별로", "부정", "rating")], existing,
+                             [{"id": 0, "key_points": ["-"], "note": ""}, {"id": 1, "key_points": ["-"], "note": ""}])
+    kp = sheets_writer.HEADER.index("key_points")
+    assert updated == 2 and [ws.values[i][kp] for i in (1, 2)] == ["-", "-"], f"실제: {ws.values}"
+    print("PASS: test_apply_results_key_points_distinct_rows")
+
+
 if __name__ == "__main__":
     test_find_candidates_filters_lexicon_only()
     test_find_candidates_splits_matched_words_into_list()
@@ -237,3 +331,9 @@ if __name__ == "__main__":
     test_apply_results_maps_duplicate_contents_to_distinct_lexicon_rows()
     test_apply_results_does_not_match_other_hospital_with_same_content()
     test_apply_results_raises_when_request_file_missing()
+    test_find_candidates_adds_key_point_task_for_negative_rows()
+    test_find_candidates_skips_rows_with_key_points()
+    test_export_includes_existing_key_points()
+    test_apply_results_key_points_only_keeps_sentiment()
+    test_apply_results_sentiment_and_key_points()
+    test_apply_results_key_points_distinct_rows()
