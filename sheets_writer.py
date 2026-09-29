@@ -36,6 +36,7 @@ def ensure_header(worksheet):
 def review_to_row(hospital_id, review, classification, collected_at):
     rating = review.get("rating")
     score = classification.get("score")
+    has_reply = review.get("has_reply", False)  # None = 모름(확장 엑셀엔 답글 정보 없음)
     return [
         hospital_id,
         review.get("channel"),
@@ -43,7 +44,7 @@ def review_to_row(hospital_id, review, classification, collected_at):
         rating if rating is not None else "",
         review.get("date"),
         review.get("content"),
-        bool(review.get("has_reply", False)),
+        "" if has_reply is None else bool(has_reply),
         classification["sentiment"],
         classification["confirmed"],
         score if score is not None else "",

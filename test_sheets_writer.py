@@ -181,6 +181,16 @@ def test_batch_update_sentiments_noop_when_no_updates():
     print("PASS: test_batch_update_sentiments_noop_when_no_updates")
 
 
+def test_review_to_row_has_reply_none_is_blank():
+    classification = {"sentiment": "긍정", "confirmed": True, "score": 2, "matched_words": [], "method": "lexicon"}
+    col = sheets_writer.HEADER.index("has_reply")
+    base = {"channel": "네이버", "author": "", "rating": None, "date": "9.16.수", "content": "좋아요"}
+    assert sheets_writer.review_to_row("h_a", {**base, "has_reply": None}, classification, "t")[col] == ""
+    assert sheets_writer.review_to_row("h_a", {**base, "has_reply": True}, classification, "t")[col] is True
+    assert sheets_writer.review_to_row("h_a", base, classification, "t")[col] is False
+    print("PASS: test_review_to_row_has_reply_none_is_blank")
+
+
 if __name__ == "__main__":
     test_ensure_header_writes_header_when_sheet_empty()
     test_ensure_header_writes_header_when_first_row_is_blank()
@@ -194,3 +204,4 @@ if __name__ == "__main__":
     test_update_sentiment_updates_only_sentiment_confirmed_method_columns()
     test_batch_update_sentiments_updates_multiple_rows_in_a_single_api_call()
     test_batch_update_sentiments_noop_when_no_updates()
+    test_review_to_row_has_reply_none_is_blank()
