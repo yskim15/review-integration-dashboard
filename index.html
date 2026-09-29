@@ -20,6 +20,8 @@
     --warning:#B4780A; --warning-tint:#FCF0DA;
     --navy-900:#0F1E42; --navy-800:#16285A; --navy-700:#1E3A8A;
     --chart-1:#2A78D6; --chart-2:#EB6834; --chart-3:#1BAF7A;
+    /* 카카오 채널 표시: 카카오 브랜드 노란색 + 그 위 글자색(흰 글씨는 노란 바탕에서 안 읽힘) — 라이트/다크 공통 */
+    --kakao:#FEE500; --kakao-ink:#191919;
     --shadow: 0 1px 2px rgba(15,23,42,0.05), 0 6px 20px rgba(15,23,42,0.08);
     --font-display: 'IBM Plex Sans KR','Noto Sans KR',system-ui,-apple-system,sans-serif;
     --font-body: 'Noto Sans KR','IBM Plex Sans KR',system-ui,-apple-system,sans-serif;
@@ -434,7 +436,9 @@
   var META_URL = "hospitals_meta.json";
 
   var PLATFORM_LABEL = { naver: "네이버", kakao: "카카오", google: "구글" };
-  var PLATFORM_VAR = { naver: "--chart-3", kakao: "--chart-2", google: "--chart-1" };
+  var PLATFORM_VAR = { naver: "--chart-3", kakao: "--kakao", google: "--chart-1" };
+  // 채널 색 바탕 위 글자색(배지·칩). 카카오는 노란 바탕이라 검정 계열.
+  var PLATFORM_INK = { naver: "#fff", kakao: "var(--kakao-ink)", google: "#fff" };
   var CHANNEL_KO_TO_KEY = { "네이버": "naver", "카카오맵": "kakao", "구글": "google" };
   var SENTIMENT_KO_TO_KEY = { "긍정": "positive", "부정": "negative", "중립": "neutral" };
 
@@ -628,7 +632,7 @@
       card.setAttribute("tabindex", "0");
       card.innerHTML =
         '<div class="cc-head">' +
-          '<span class="cc-badge" style="background:' + color + '">' + CHAN_BADGE[ch] + '</span>' +
+          '<span class="cc-badge" style="background:' + color + ';color:' + PLATFORM_INK[ch] + '">' + CHAN_BADGE[ch] + '</span>' +
           '<span class="cc-name">' + PLATFORM_LABEL[ch] + '</span>' +
           '<span class="cc-total tnum">' + total + '<span class="unit">건</span></span>' +
         '</div>' +
@@ -972,7 +976,7 @@
     var tags = r.sentiment === "neutral" ? [] : r.keyPoints;
     return '<div class="review-item' + (isNeg ? " is-negative" : "") + '">' +
       '<div class="r-top">' +
-        '<span class="chip" style="background:' + css(PLATFORM_VAR[r.channel]) + '">' + PLATFORM_LABEL[r.channel] + '</span>' +
+        '<span class="chip" style="background:' + css(PLATFORM_VAR[r.channel]) + ';color:' + PLATFORM_INK[r.channel] + '">' + PLATFORM_LABEL[r.channel] + '</span>' +
         '<span class="r-date tnum">' + (r.date || "날짜 없음") + '</span>' +
         '<span class="r-author">' + escapeHtml(r.author) + (r.rating ? " · ★" + r.rating : "") + '</span>' +
         (r.confirmed ? "" : '<span class="badge unconfirmed">미확정</span>') +
