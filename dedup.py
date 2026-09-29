@@ -17,19 +17,26 @@ import datetime
 import re
 
 _NAVER = "네이버"
+_KST = datetime.timezone(datetime.timedelta(hours=9))
 # 네이버 작성일 실측 형식: "M.D.요일"(올해) / "YY.M.D.요일"
 _NAVER_DATE_RE = re.compile(r"^(?:(\d{2})\.)?(\d{1,2})\.(\d{1,2})\.[가-힣]$")
 
 
 def normalize_content(text):
-    return re.sub(r"\s+", " ", text or "").strip()
+    # 시트 get_all_records()는 "5" 같은 본문을 int로 돌려준다 — 문자열로 맞춰 비교한다
+    return re.sub(r"\s+", " ", "" if text is None else str(text)).strip()
 
 
 def _reference_date(collected_at):
+    """collected_at의 KST 날짜. 네이버 작성일은 KST인데 Actions는 UTC로 collected_at을 남겨,
+    KST 00~09시 수동 실행 때 오늘 리뷰가 '미래'로 보여 전년도로 해석되는 것을 막는다."""
     try:
-        return datetime.date.fromisoformat(str(collected_at or "")[:10])
+        moment = datetime.datetime.fromisoformat(str(collected_at or ""))
     except ValueError:
         return None
+    if moment.tzinfo is not None:
+        moment = moment.astimezone(_KST)
+    return moment.date()
 
 
 def parse_naver_date(value, collected_at):

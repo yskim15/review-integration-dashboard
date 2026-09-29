@@ -112,6 +112,19 @@ def test_naver_same_batch_same_date_kept_once_different_date_both_kept():
     print("PASS: test_naver_same_batch_same_date_kept_once_different_date_both_kept")
 
 
+def test_naver_numeric_content_from_sheet_does_not_crash():
+    # get_all_records()는 숫자처럼 보이는 셀을 int로 돌려준다 — 본문 "5"인 리뷰가 다음 실행에서 5로 읽힘
+    existing = [_naver(5, "9.16.수", NOW)]
+    assert find_new_reviews(existing, [_naver("5", "9.16.수")], NOW) == []
+    print("PASS: test_naver_numeric_content_from_sheet_does_not_crash")
+
+
+def test_parse_naver_date_uses_kst_day_of_utc_collected_at():
+    # Actions는 UTC로 collected_at을 남긴다. 2026-09-28T23:30Z = KST 9/29 08:30 — 그날 쓴 "9.29.화"는 올해
+    assert parse_naver_date("9.29.화", "2026-09-28T23:30:00+00:00") == "2026-09-29"
+    print("PASS: test_parse_naver_date_uses_kst_day_of_utc_collected_at")
+
+
 def test_kakao_still_exact_content_only():
     existing = [{"channel": "카카오맵", "content": "좋아요", "date": "3일 전", "collected_at": NOW}]
     assert find_new_reviews(existing, [{"channel": "카카오맵", "content": "좋아요", "date": "1주 전"}], NOW) == []
@@ -134,3 +147,5 @@ if __name__ == "__main__":
     test_existing_row_without_collected_at_falls_back_to_content()
     test_naver_same_batch_same_date_kept_once_different_date_both_kept()
     test_kakao_still_exact_content_only()
+    test_naver_numeric_content_from_sheet_does_not_crash()
+    test_parse_naver_date_uses_kst_day_of_utc_collected_at()
