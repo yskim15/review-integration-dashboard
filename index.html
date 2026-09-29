@@ -99,9 +99,16 @@
     padding:18px 28px; border-bottom:1px solid var(--border); background:var(--surface);
   }
   .topbar h1 { font-size:20px; font-weight:700; }
-  .title-row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-  /* 세마컨설팅 로고: 남색 문장이라 다크 모드에서도 보이도록 흰 바탕 타일에 올린다 */
-  .brand-logo { width:40px; height:40px; flex:none; background:#fff; border-radius:8px; padding:2px; box-sizing:border-box; }
+  /* 세마컨설팅 영문 로고(상단바 맨 오른쪽): 라이트=파란색, 다크=흰색 버전을 테마 규칙에 맞춰 바꿔 보여준다 */
+  .brand-logo { flex:none; margin-left:auto; line-height:0; }
+  .brand-logo img { height:32px; width:auto; max-width:100%; }
+  .brand-logo .logo-dark { display:none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .brand-logo .logo-light { display:none; }
+    :root:not([data-theme="light"]) .brand-logo .logo-dark { display:inline; }
+  }
+  :root[data-theme="dark"] .brand-logo .logo-light { display:none; }
+  :root[data-theme="dark"] .brand-logo .logo-dark { display:inline; }
   .topbar .meta { display:flex; align-items:center; gap:8px; margin-top:5px; font-size:12.5px; color:var(--text-secondary); flex-wrap:wrap; }
   .live-dot { width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px var(--good-tint); flex:none; }
   .content { padding:24px 28px 60px; max-width:1240px; }
@@ -279,11 +286,12 @@
   <div class="main-col">
     <header class="topbar">
       <div>
-        <div class="title-row">
-          <h1 id="hospitalTitle">지점별 VOC 통합 대시보드</h1>
-          <img class="brand-logo" src="assets/sema_logo.png" alt="세마컨설팅" width="40" height="40">
-        </div>
+        <h1 id="hospitalTitle">지점별 VOC 통합 대시보드</h1>
         <div class="meta"><span class="live-dot"></span><span id="lastUpdatedText">데이터 불러오는 중…</span></div>
+      </div>
+      <div class="brand-logo">
+        <img class="logo-light" src="assets/sema_consulting_blue.png" alt="SEMA CONSULTING" width="194" height="32">
+        <img class="logo-dark" src="assets/sema_consulting_white.png" alt="SEMA CONSULTING" width="194" height="32">
       </div>
     </header>
 
