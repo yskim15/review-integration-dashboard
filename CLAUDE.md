@@ -7,7 +7,8 @@
 
 1. **`main.py`** — 매일 13:00 KST GitHub Actions가 완전 무인으로 실행하는 수집
    파이프라인(collectors → dedup → `classifier/rule_based.py` → Sheets append).
-   이 폴더 작업 중 절대 건드리지 않는다(설계상 고정).
+   수집 채널·스케줄·Actions 워크플로우는 설계상 고정이다. 적재(중복 제거 → 분류 → append)는
+   `review_ingest.ingest` 공통 함수로, 크롬 확장 브리지와 같은 경로를 쓴다(2026-09-29).
 2. **`reclassify.py`** — Claude Code 세션이 켜져 있을 때만 도는 검수(재분류)
    파이프라인. `method=="lexicon"`인 시트 행(규칙기반 감성분류)을 Claude가 다시
    판단해 `sentiment`/`confirmed`/`method` 컬럼만 갱신한다. 아래는 이 파이프라인
@@ -125,8 +126,9 @@ python naver_extension_bridge.py import <다운로드 폴더> --apply  # 시트 
 ```
 
 - `--apply`는 `GOOGLE_SHEET_ID`/`GCP_SA_KEY` 환경변수 필요(`reclassify.py`와 동일).
-- 중복 판정은 본문 공백·줄바꿈을 정규화해 비교한다(GraphQL 본문과 확장이 DOM에서 읽은
-  본문의 공백이 다를 수 있음). 확장 엑셀엔 작성자·답글 정보가 없어 빈 값으로 둔다.
+- 중복 판정은 `dedup.py` 공통 규칙을 따른다: 네이버는 (공백 정규화 본문, 작성일), 한쪽이라도
+  작성일을 모르면 본문만 비교. 카카오·구글은 (channel, content) 완전 일치. 확장 엑셀엔 작성자·
+  답글 정보가 없어 빈 값으로 둔다.
 - 확장도 플레이스 URL이 있어야 수집할 수 있다 — 플레이스 ID 확보는 위 온보딩 절차를 따른다.
 
 ## 보안

@@ -12,8 +12,8 @@
     python naver_extension_bridge.py import <xlsx 파일 또는 폴더...>          # 미리보기(dry-run)
     python naver_extension_bridge.py import <xlsx 파일 또는 폴더...> --apply  # 시트 반영
 
-import --apply는 main.py와 같은 흐름(중복 제거 → 규칙기반 분류 → Sheets append)을
-탄다. `GOOGLE_SHEET_ID`/`GCP_SA_KEY` 환경변수가 필요하다(reclassify.py와 동일).
+import --apply는 main.py와 같은 review_ingest.ingest(중복 제거 → 규칙기반 분류 →
+Sheets append)를 호출한다. `GOOGLE_SHEET_ID`/`GCP_SA_KEY` 환경변수가 필요하다(reclassify.py와 동일).
 
 확장 엑셀에는 작성자·사장님 답글 여부가 없다 — author는 빈 값(프론트가 "익명"으로 표시),
 has_reply는 빈 값(모름)으로 적는다. 추정해서 채우지 않는다.
@@ -27,9 +27,8 @@ import re
 import sys
 from pathlib import Path
 
-import dedup
+import review_ingest
 import sheets_writer
-from classifier.rule_based import classify
 
 BASE_DIR = Path(__file__).resolve().parent
 WORK_DIR = BASE_DIR / "naver_extension_work"
@@ -87,11 +86,6 @@ def name_to_id_map(entities):
     return mapping
 
 
-def normalize_content(text):
-    """GraphQL 본문과 확장이 DOM에서 읽은 본문은 줄바꿈·공백이 다를 수 있다 — 비교용 정규화."""
-    return re.sub(r"\s+", " ", text or "").strip()
-
-
 def rows_to_reviews(rows):
     """엑셀 행(헤더 포함) → 수집기와 같은 리뷰 dict 목록. 헤더가 다르면 에러."""
     if not rows or list(rows[0][:4]) != EXPECTED_HEADER:
@@ -105,20 +99,6 @@ def rows_to_reviews(rows):
         reviews.append({"channel": "네이버", "author": "", "rating": None,
                         "date": date_raw or "", "content": content, "has_reply": None})
     return reviews
-
-
-def select_new(existing_for_hospital, reviews):
-    """이미 시트에 있는 리뷰(정규화 본문 기준)를 빼고, 파일 안 중복도 1건만 남긴다."""
-    seen = {normalize_content(r.get("content")) for r in existing_for_hospital if r.get("channel") == "네이버"}
-    fresh = [r for r in reviews if normalize_content(r["content"]) not in seen]
-    # 같은 파일 안 완전 중복은 기존 dedup 규칙(channel, content)으로 한 번 더 거른다
-    unique, keys = [], set()
-    for r in dedup.find_new_reviews([], fresh):
-        k = normalize_content(r["content"])
-        if k not in keys:
-            keys.add(k)
-            unique.append(r)
-    return unique
 
 
 def _read_xlsx(path):
@@ -190,16 +170,10 @@ def cmd_import(paths, apply):
         if not apply:
             print(f"- {path.name} -> {hospital_id}: 리뷰 {len(reviews)}건 (시트 중복 여부는 --apply 때 확인)")
             continue
-        new = select_new([r for r in existing if r.get("hospital_id") == hospital_id], reviews)
-        rows = []
-        for review in new:
-            row = sheets_writer.review_to_row(hospital_id, review, classify(review), collected_at)
-            row[sheets_writer.HEADER.index("has_reply")] = ""  # 확장 엑셀엔 답글 정보가 없음(모름)
-            rows.append(row)
-        if rows:
-            worksheet.append_rows(rows, value_input_option="RAW")
-        total += len(rows)
-        print(f"- {path.name} -> {hospital_id}: 파일 {len(reviews)}건 중 신규 {len(rows)}건 반영")
+        existing_for_hospital = [r for r in existing if r.get("hospital_id") == hospital_id]
+        added = review_ingest.ingest(worksheet, existing_for_hospital, hospital_id, reviews, collected_at)
+        total += added
+        print(f"- {path.name} -> {hospital_id}: 파일 {len(reviews)}건 중 신규 {added}건 반영")
     if apply:
         print(f"총 {total}건 반영 완료.")
     else:

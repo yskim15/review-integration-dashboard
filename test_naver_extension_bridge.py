@@ -1,14 +1,19 @@
 """naver_extension_bridge.py 테스트 (네트워크·시트 호출 없음, 가상 병원명 사용)."""
 
+import os
 import tempfile
+from unittest.mock import patch
 from pathlib import Path
 
 import openpyxl
 
+import sheets_writer
+
 from naver_extension_bridge import (
     EXPECTED_HEADER, FILENAME_RE, _read_xlsx, build_targets, name_to_id_map,
-    rows_to_reviews, safe_name, select_new,
+    cmd_import, rows_to_reviews, safe_name,
 )
+from test_sheets_writer import FakeWorksheet
 
 ENTITIES = [
     {"hospital_id": "h_a", "name": "가나다의원", "naver_place_url": "https://m.place.naver.com/hospital/111/review/visitor"},
@@ -65,18 +70,6 @@ def test_rows_to_reviews():
     print("PASS: test_rows_to_reviews")
 
 
-def test_select_new_ignores_whitespace_differences():
-    existing = [{"hospital_id": "h_a", "channel": "네이버", "content": "친절해요\n또 올게요"},
-                {"hospital_id": "h_a", "channel": "카카오맵", "content": "좋아요"}]
-    incoming = [{"channel": "네이버", "content": "친절해요 또 올게요"},   # 시트에 이미 있음(공백만 다름)
-                {"channel": "네이버", "content": "좋아요"},              # 카카오에만 있음 → 신규
-                {"channel": "네이버", "content": "새 리뷰"},
-                {"channel": "네이버", "content": "새  리뷰"}]            # 파일 안 중복
-    new = select_new(existing, incoming)
-    assert [r["content"] for r in new] == ["좋아요", "새 리뷰"], f"실제: {new}"
-    print("PASS: test_select_new_ignores_whitespace_differences")
-
-
 def test_read_xlsx_roundtrip():
     with tempfile.TemporaryDirectory() as d:
         path = Path(d) / "네이버리뷰수집_가나다의원_20260928.xlsx"
@@ -90,10 +83,57 @@ def test_read_xlsx_roundtrip():
     print("PASS: test_read_xlsx_roundtrip")
 
 
+def _write_extension_xlsx(folder, rows):
+    path = Path(folder) / "네이버리뷰수집_가나다의원_20260929.xlsx"
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(EXPECTED_HEADER)
+    for row in rows:
+        ws.append(row)
+    wb.save(path)
+    return path
+
+
+def _existing_row(content, date):
+    review = {"channel": "네이버", "author": "홍*", "rating": None, "date": date, "content": content, "has_reply": False}
+    classification = {"sentiment": "긍정", "confirmed": True, "score": 2, "matched_words": [], "method": "claude_review"}
+    return sheets_writer.review_to_row("h_a", review, classification, "2026-09-28T13:00:00+09:00")
+
+
+def _run_import(folder, sheet_rows):
+    ws = FakeWorksheet(initial_values=[sheets_writer.HEADER] + sheet_rows)
+    with patch.dict(os.environ, {"GOOGLE_SHEET_ID": "x", "GCP_SA_KEY": "{}"}), \
+         patch("naver_extension_bridge._load_entities", return_value=ENTITIES), \
+         patch("naver_extension_bridge.sheets_writer.connect", return_value=ws):
+        assert cmd_import([folder], apply=True) == 0
+    return ws
+
+
+def test_import_apply_goes_through_shared_ingest_with_blank_has_reply():
+    with tempfile.TemporaryDirectory() as d:
+        _write_extension_xlsx(d, [["네이버", "9.16.수", "2026-09-16", "좋았어요"],
+                                  ["네이버", "9.17.목", "2026-09-17", "좋았어요"]])  # 같은 글, 다른 날 → 2건
+        ws = _run_import(d, [])
+    added = ws.values[1:]
+    assert [r[sheets_writer.HEADER.index("date")] for r in added] == ["9.16.수", "9.17.목"], f"실제: {added}"
+    assert all(r[sheets_writer.HEADER.index("has_reply")] == "" for r in added)
+    assert all(r[sheets_writer.HEADER.index("hospital_id")] == "h_a" for r in added)
+    print("PASS: test_import_apply_goes_through_shared_ingest_with_blank_has_reply")
+
+
+def test_import_apply_skips_whitespace_variant_of_existing():
+    with tempfile.TemporaryDirectory() as d:
+        _write_extension_xlsx(d, [["네이버", "25.9.16.화", "2025-09-16", "친절해요 또 올게요"]])  # 연도 명시: 실행 시점과 무관
+        ws = _run_import(d, [_existing_row("친절해요\n또 올게요", "25.9.16.화")])
+    assert len(ws.values) == 2, f"신규 0건이어야 함: {ws.values}"
+    print("PASS: test_import_apply_skips_whitespace_variant_of_existing")
+
+
 if __name__ == "__main__":
     test_build_targets_only_place_urls()
     test_filename_and_name_mapping()
     test_name_collision_raises()
     test_rows_to_reviews()
-    test_select_new_ignores_whitespace_differences()
     test_read_xlsx_roundtrip()
+    test_import_apply_goes_through_shared_ingest_with_blank_has_reply()
+    test_import_apply_skips_whitespace_variant_of_existing()
