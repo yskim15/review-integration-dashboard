@@ -101,9 +101,6 @@
   .topbar h1 { font-size:20px; font-weight:700; }
   .topbar .meta { display:flex; align-items:center; gap:8px; margin-top:5px; font-size:12.5px; color:var(--text-secondary); flex-wrap:wrap; }
   .live-dot { width:7px; height:7px; border-radius:50%; background:var(--good); box-shadow:0 0 0 3px var(--good-tint); flex:none; }
-  .auth-pill { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700; padding:3px 10px; border-radius:999px; }
-  .auth-pill.verified { background:var(--good-tint); color:var(--good); }
-  .auth-pill.sample { background:var(--surface-sunken); color:var(--text-muted); border:1px solid var(--border); }
   .content { padding:24px 28px 60px; max-width:1240px; }
 
   /* ---------- controls ---------- */
@@ -282,7 +279,6 @@
         <h1 id="hospitalTitle">지점별 VOC 통합 대시보드</h1>
         <div class="meta"><span class="live-dot"></span><span id="lastUpdatedText">데이터 불러오는 중…</span></div>
       </div>
-      <span class="auth-pill" id="authPill"></span>
     </header>
 
     <div class="content">
@@ -537,17 +533,7 @@
   // ---------------------------------------------------------------
   var params = new URLSearchParams(location.search);
   var hospitalId = params.get("hospital");
-  var tokenParam = params.get("token");
   var DEFAULT_TITLE = "지점별 VOC 통합 대시보드";
-
-  var authPill = document.getElementById("authPill");
-  if (tokenParam) {
-    authPill.className = "auth-pill verified";
-    authPill.textContent = "토큰 인증됨";
-  } else {
-    authPill.className = "auth-pill sample";
-    authPill.textContent = "샘플 모드 (토큰 없음)";
-  }
 
   var REVIEWS = [];
   var HOSPITAL_META = null;
@@ -843,7 +829,7 @@
   }
 
   // ---------------------------------------------------------------
-  // 지도: 자사 위치 + 동일 행정동 경쟁병원(실제 수집 데이터, hospitals_meta.json의
+  // 지도: 자사 위치 + 경쟁병원(실제 수집 데이터, hospitals_meta.json의
   // competitors 목록 기준). 드롭다운에서 특정 경쟁병원 하나만 골라볼 수도 있다.
   // ---------------------------------------------------------------
   function competitorBadgeHtml(label, isSelf, trendIcon) {
@@ -1113,7 +1099,7 @@
       document.getElementById("hospitalTitle").textContent = HOSPITAL_META.name + " VOC 통합 대시보드";
       document.getElementById("brandName").textContent = HOSPITAL_META.name;
       document.getElementById("brandMark").textContent = HOSPITAL_META.name.slice(0, 2);
-      document.getElementById("mapRegionLabel").textContent = HOSPITAL_META.region_label ? (HOSPITAL_META.name + " · " + HOSPITAL_META.region_label) : HOSPITAL_META.name;
+      document.getElementById("mapRegionLabel").textContent = HOSPITAL_META.name;
     } else if (hospitalId) {
       document.getElementById("hospitalTitle").textContent = decodeURIComponent(hospitalId) + " VOC 통합 대시보드";
       document.getElementById("brandName").textContent = decodeURIComponent(hospitalId);
