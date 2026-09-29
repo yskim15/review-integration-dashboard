@@ -5,8 +5,8 @@ Claude Code 세션이 켜져 있을 때만 /loop 등으로 주기 실행되어, 
 시트 행(규칙기반 감성분류)을 Claude가 다시 판단해 sentiment/confirmed/method만
 갱신한다. 설계: docs/superpowers/specs/2026-09-21-claude-reclassify-review-design.md
 
-부정 리뷰(별점 판정 포함)는 Claude가 주요 불만 포인트를 key_points 컬럼에 적는다 —
-대시보드 부정 키워드 TOP 5의 원천. 설계: docs/superpowers/specs/2026-09-29-negative-key-points-design.md
+긍정·부정 리뷰(별점 판정 포함)는 Claude가 주요 칭찬/불만 포인트를 key_points 컬럼에 적는다 —
+대시보드 긍정·부정 키워드 TOP 5의 원천. 설계: docs/superpowers/specs/2026-09-29-negative-key-points-design.md
 """
 
 import argparse
@@ -24,17 +24,20 @@ RESULT_FILENAME = "[재분류결과].json"
 LOG_FILENAME = "reclassify_log.jsonl"
 
 
+_KEY_POINT_SENTIMENTS = ("부정", "긍정")
+
+
 def _split_key_points(value):
     return [p.strip() for p in str(value or "").split(",") if p.strip()]
 
 
 def _tasks_for(review):
     """이 행에 Claude가 할 일. 감성 재판정은 규칙기반(lexicon) 행만, 주요 포인트는
-    본문이 있고 아직 포인트가 없는 부정 행(별점 판정 포함) — 감성 작업 행은 판단 결과가
-    부정일 수 있어 포인트 작업도 같이 받는다."""
+    본문이 있고 아직 포인트가 없는 긍정·부정 행(별점 판정 포함) — 감성 작업 행은 판단 결과가
+    긍정·부정일 수 있어 포인트 작업도 같이 받는다. 중립은 포인트를 쓰지 않는다."""
     if review.get("method") == "lexicon":
         return ["sentiment", "key_points"]
-    if (review.get("sentiment") == "부정" and str(review.get("content") or "").strip()
+    if (review.get("sentiment") in _KEY_POINT_SENTIMENTS and str(review.get("content") or "").strip()
             and not _split_key_points(review.get("key_points"))):
         return ["key_points"]
     return []
@@ -62,9 +65,14 @@ def find_candidates(existing_reviews):
 
 
 def count_key_points(existing_reviews):
-    """지금까지 쓴 주요 포인트와 건수 — 같은 불만을 같은 말로 쓰게 요청 파일에 넣는다."""
-    counts = Counter(p for r in existing_reviews for p in _split_key_points(r.get("key_points")) if p != "-")
-    return dict(counts.most_common())
+    """지금까지 쓴 주요 포인트와 건수(감성별) — 같은 칭찬/불만을 같은 말로 쓰게 요청 파일에 넣는다.
+    칭찬과 불만 표현이 한 목록에 섞이지 않게 {"부정": {...}, "긍정": {...}}로 나눈다."""
+    result = {}
+    for sentiment in _KEY_POINT_SENTIMENTS:
+        counts = Counter(p for r in existing_reviews if r.get("sentiment") == sentiment
+                         for p in _split_key_points(r.get("key_points")) if p != "-")
+        result[sentiment] = dict(counts.most_common())
+    return result
 
 
 def export_for_claude(candidates, work_dir, existing_key_points=None):

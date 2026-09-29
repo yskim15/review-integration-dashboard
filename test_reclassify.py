@@ -163,10 +163,13 @@ def test_apply_results_maps_duplicate_contents_to_distinct_lexicon_rows():
             _row(content="굿", sentiment="중립", method="lexicon", matched_words=""),
             _row(content="굿", sentiment="중립", method="lexicon", matched_words=""),
         ]
-        reclassify.export_for_claude(reclassify.find_candidates(existing), work_dir)
+        candidates = reclassify.find_candidates(existing)
+        reclassify.export_for_claude(candidates, work_dir)
+        # 이미 claude_review인 긍정 행도 주요 포인트 후보가 되므로, 감성 작업(lexicon) 후보의 id만 쓴다
+        lexicon_ids = [c["id"] for c in candidates if "sentiment" in c["tasks"]]
+        assert len(lexicon_ids) == 2, f"실제: {candidates}"
         result_payload = {"reviewed_at": "2026-09-29T10:00:00+09:00", "results": [
-            {"id": 0, "sentiment": "긍정", "confirmed": True, "note": "짧은 칭찬"},
-            {"id": 1, "sentiment": "긍정", "confirmed": True, "note": "짧은 칭찬"},
+            {"id": i, "sentiment": "긍정", "confirmed": True, "note": "짧은 칭찬"} for i in lexicon_ids
         ]}
         with open(os.path.join(work_dir, reclassify.RESULT_FILENAME), "w", encoding="utf-8") as f:
             json.dump(result_payload, f, ensure_ascii=False)
@@ -278,11 +281,13 @@ def test_export_includes_existing_key_points():
     work_dir = tempfile.mkdtemp()
     try:
         existing = [_row(key_points="주차,가격", method="rating"), _row(key_points="주차", method="rating"),
-                    _row(key_points="-", method="rating"), _row(content="새 불만", method="rating")]
+                    _row(key_points="-", method="rating"), _row(content="새 불만", method="rating"),
+                    _row(key_points="직원 친절", sentiment="긍정", method="claude_review")]
         path = reclassify.export_for_claude(reclassify.find_candidates(existing), work_dir,
                                             reclassify.count_key_points(existing))
         payload = json.loads(open(path, encoding="utf-8").read())
-        assert payload["existing_key_points"] == {"주차": 2, "가격": 1}, f"실제: {payload['existing_key_points']}"
+        # 칭찬·불만 표현이 섞이지 않게 감성별로 나눈다
+        assert payload["existing_key_points"] == {"부정": {"주차": 2, "가격": 1}, "긍정": {"직원 친절": 1}},             f"실제: {payload['existing_key_points']}"
         print("PASS: test_export_includes_existing_key_points")
     finally:
         shutil.rmtree(work_dir)
@@ -329,6 +334,18 @@ def test_apply_results_key_points_distinct_rows():
     print("PASS: test_apply_results_key_points_distinct_rows")
 
 
+
+def test_find_candidates_adds_key_point_task_for_positive_rows():
+    existing = [
+        _row(content="직원분들이 친절해요", sentiment="긍정", method="claude_review"),
+        _row(content="좋아요", sentiment="긍정", method="rating"),
+        _row(content="그냥 그래요", sentiment="중립", method="claude_review"),
+    ]
+    candidates = reclassify.find_candidates(existing)
+    assert [(c["content"], c["tasks"]) for c in candidates] == [("직원분들이 친절해요", ["key_points"]), ("좋아요", ["key_points"])], f"실제: {candidates}"
+    print("PASS: test_find_candidates_adds_key_point_task_for_positive_rows")
+
+
 if __name__ == "__main__":
     test_find_candidates_filters_lexicon_only()
     test_find_candidates_splits_matched_words_into_list()
@@ -347,3 +364,4 @@ if __name__ == "__main__":
     test_apply_results_sentiment_and_key_points()
     test_apply_results_key_points_distinct_rows()
     test_apply_results_key_points_string_is_one_point()
+    test_find_candidates_adds_key_point_task_for_positive_rows()
