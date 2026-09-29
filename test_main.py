@@ -89,9 +89,32 @@ def test_load_competitors_reads_config():
     print("PASS: test_load_competitors_reads_config")
 
 
+def test_run_routes_new_reviews_through_review_ingest():
+    hospital = {"hospital_id": "h_a", "hospital_name": "가나다의원", "channels": _FULL_CHANNELS}
+    existing = [{"hospital_id": "h_a", "channel": "네이버", "content": "기존"},
+                {"hospital_id": "h_other", "channel": "네이버", "content": "다른 병원"}]
+    raw = [{"channel": "네이버", "content": "새 리뷰"}]
+    with patch.dict(os.environ, {"GOOGLE_SHEET_ID": "x", "GCP_SA_KEY": "{}"}), \
+         patch("main.load_hospitals", return_value=[hospital]), \
+         patch("main.load_competitors", return_value=[]), \
+         patch("main.sheets_writer.connect", return_value="WS"), \
+         patch("main.sheets_writer.ensure_header"), \
+         patch("main.sheets_writer.read_existing_reviews", return_value=existing), \
+         patch("main.collect_hospital", return_value=(raw, [])), \
+         patch("main.review_ingest.ingest", return_value=1) as ingest:
+        main.run()
+    ingest.assert_called_once()
+    worksheet, existing_arg, hospital_id, reviews, collected_at = ingest.call_args.args
+    assert worksheet == "WS" and hospital_id == "h_a" and reviews == raw
+    assert existing_arg == [existing[0]], "그 병원 행만 넘겨야 함"
+    assert collected_at
+    print("PASS: test_run_routes_new_reviews_through_review_ingest")
+
+
 if __name__ == "__main__":
     test_collect_hospital_aggregates_all_channels()
     test_collect_hospital_isolates_single_channel_failure()
     test_collect_hospital_all_channels_fail_returns_empty_list_not_exception()
     test_collect_hospital_skips_channel_with_missing_url()
     test_load_competitors_reads_config()
+    test_run_routes_new_reviews_through_review_ingest()
