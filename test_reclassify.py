@@ -310,6 +310,15 @@ def test_apply_results_sentiment_and_key_points():
     print("PASS: test_apply_results_sentiment_and_key_points")
 
 
+def test_apply_results_key_points_string_is_one_point():
+    # 결과 JSON을 손으로 쓰다 리스트 대신 문자열을 넣으면 "주,차"로 쪼개지던 문제 (리뷰 지적)
+    existing = [_row(channel="구글", content="주차장 입구를 막아요", sentiment="부정", method="rating", matched_words="")]
+    ws, _ = _run_apply([_sheet_row("주차장 입구를 막아요", "부정", "rating")], existing,
+                       [{"id": 0, "key_points": "주차", "note": ""}])
+    assert ws.values[1][sheets_writer.HEADER.index("key_points")] == "주차", f"실제: {ws.values[1]}"
+    print("PASS: test_apply_results_key_points_string_is_one_point")
+
+
 def test_apply_results_key_points_distinct_rows():
     existing = [_row(channel="구글", content="별로", sentiment="부정", method="rating", matched_words=""),
                 _row(channel="구글", content="별로", sentiment="부정", method="rating", matched_words="")]
@@ -337,3 +346,4 @@ if __name__ == "__main__":
     test_apply_results_key_points_only_keeps_sentiment()
     test_apply_results_sentiment_and_key_points()
     test_apply_results_key_points_distinct_rows()
+    test_apply_results_key_points_string_is_one_point()

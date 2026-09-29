@@ -87,7 +87,7 @@ def export_for_claude(candidates, work_dir, existing_key_points=None):
 def apply_results(worksheet, existing_reviews, work_dir):
     """[재분류결과].json을 읽어 시트에 반영한다. 실제로 바뀐 행 수를 반환한다.
 
-    (hospital_id, channel, content)가 같고 method=="lexicon"인 행을 시트 순서대로
+    (hospital_id, channel, content)가 같고 후보와 같은 작업 대상(_tasks_for)인 행을 시트 순서대로
     하나씩 배정해 existing_reviews에서 실제 시트 행을 찾는다. 그 사이
     시트가 바뀌어 못 찾으면 그 건은 건너뛰고 경고만 출력, 나머지는 계속 진행한다."""
     work_dir = Path(work_dir)
@@ -132,8 +132,12 @@ def apply_results(worksheet, existing_reviews, work_dir):
         fields = {}
         if "sentiment" in tasks and "sentiment" in result:
             fields.update(sentiment=result["sentiment"], confirmed=result["confirmed"], method="claude_review")
-        if "key_points" in tasks and result.get("key_points"):
-            fields["key_points"] = ",".join(p.strip() for p in result["key_points"] if p.strip())
+        points = result.get("key_points") or []
+        if isinstance(points, str):  # 리스트 대신 문자열로 적어도 한 개의 포인트로 본다("주,차"로 쪼개지지 않게)
+            points = [points]
+        points = [str(p).strip() for p in points if str(p).strip()]
+        if "key_points" in tasks and points:
+            fields["key_points"] = ",".join(points)
         if not fields:
             continue
         row_updates.append((row_number, fields))
