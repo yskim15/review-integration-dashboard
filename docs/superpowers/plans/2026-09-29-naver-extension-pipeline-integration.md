@@ -561,7 +561,7 @@ def test_import_apply_goes_through_shared_ingest_with_blank_has_reply():
 def test_import_apply_skips_whitespace_variant_of_existing():
     with tempfile.TemporaryDirectory() as d:
         _write_extension_xlsx(d, [["네이버", "25.9.16.화", "2025-09-16", "친절해요 또 올게요"]])  # 연도 명시: 실행 시점과 무관
-        ws = _run_import(d, [_existing_row("친절해요\n또 올게요", "9.16.수")])
+        ws = _run_import(d, [_existing_row("친절해요\n또 올게요", "25.9.16.화")])
     assert len(ws.values) == 2, f"신규 0건이어야 함: {ws.values}"
     print("PASS: test_import_apply_skips_whitespace_variant_of_existing")
 ```
